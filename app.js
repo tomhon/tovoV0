@@ -156,8 +156,8 @@ function logResponse (session, question, response) {
 
 // Create chat connector for communicating with the Bot Framework Service
 var connector = new builder.ChatConnector({
-    appId: process.env.MICROSOFT_APP_ID,
-    appPassword: process.env.MICROSOFT_APP_PASSWORD
+    appId: process.env.MICROSOFT_APP_ID || "644048c6-8d61-4d63-8810-3832d34862e1",
+    appPassword: process.env.MICROSOFT_APP_PASSWORD || "VQykmSeONQUD5JNeEccejWU"
 });
 
 // Listen for messages from users 
@@ -181,14 +181,14 @@ function startProactiveDialog(addr) {
 
 
 bot.dialog('/', [
-    function (session, args, next) {
-        savedAddress = session.message.address;
-        if (session.userData.lastSurveyDate === false) {
-        //check for user already completed today's survey
-        // if (session.userData.lastSurveyDate === today) {
-            session.endDialog('You\'ve already given feedback on today\'s session. Thanks!');
-        } 
-    },
+    // function (session, args, next) {
+    //     savedAddress = session.message.address;
+    //     if (session.userData.lastSurveyDate === false) {
+    //     //check for user already completed today's survey
+    //     // if (session.userData.lastSurveyDate === today) {
+    //         session.endDialog('You\'ve already given feedback on today\'s session. Thanks!');
+    //     } 
+    // },
     function (session) {
         session.send('Hi '+ session.message.user.name + '! Please answer a few questions about training today.');
         logResponse(session, 'User Connected?', 'Successfully' );
