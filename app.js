@@ -176,24 +176,7 @@ function startProactiveDialog(addr) {
 }
 
 
-bot.dialog('/', [ 
-    function(session, args) {
-        builder.Prompts.confirm(session, 'Would you like your name added to the Sports Science Survey list?');
-        },
 
-    function (session, results) {
-        console.log('Response is ', results.response);
-        if(results.response){
-            savedAddress = session.message.address;
-            console.log('Saved Address ', savedAddress);
-            session.endDialog('Great - Thanks! I\'ve added you to the list and you\'ll receive your first survey in the next few days');
-            }
-        else 
-            {
-              session.endDialog('OK, bye!');
-            }
-    }
-    ]);
 
 
 
@@ -288,6 +271,27 @@ bot.dialog('/survey', [
 
     }
 ]);
+
+bot.dialog('/', [ 
+    function(session, args) {
+        builder.Prompts.confirm(session, 'Would you like your name added to the Sports Science Survey list?');
+        },
+
+    function (session, results) {
+        console.log('Response is ', results.response);
+        if(results.response){
+            savedAddress = session.message.address;
+            console.log('Saved Address ', savedAddress);
+            session.endDialog('Great - Thanks! I\'ve added you to the list and you\'ll receive your first survey in the next few days');
+            }
+        else 
+            {
+              session.endDialog('OK, bye!');
+            }
+    }
+    ]);
+
+
 
 function sendProactiveMessage(addr) {
   var msg = new builder.Message().address(addr);
