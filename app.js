@@ -180,7 +180,7 @@ function startProactiveDialog(addr) {
 
 
 
-bot.dialog('/survey', [
+bot.dialog('/', [
     function (session, args, next) {
         savedAddress = session.message.address;
         if (session.userData.lastSurveyDate === false) {
@@ -272,7 +272,7 @@ bot.dialog('/survey', [
     }
 ]);
 
-bot.dialog('/', [ 
+bot.dialog('/welcome', [ 
     function(session, args) {
         builder.Prompts.confirm(session, 'Would you like your name added to the Sports Science Survey list?');
         },
