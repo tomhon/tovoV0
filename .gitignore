@@ -47,6 +47,7 @@ typings/
 
 # Optional REPL history
 .node_repl_history
+launch.json
 
 # Output of 'npm pack'
 *.tgz

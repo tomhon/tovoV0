@@ -4,7 +4,7 @@ config.endpoint = "https://suplayerhealth.documents.azure.com:443/";
 config.primaryKey = "iR2sJ04BfMURMgIxKPA6fQz9YFIUfRcauueQG3TthlakwAZvz4dyRYrodr1iZMh4oM3TM9Uh38QSDPL7az1mBg==";
 
 config.database = {
-    "id": "PlayerHealthDB"
+    "id": "PlayerTrackingDB"
 };
 
 config.collection = {

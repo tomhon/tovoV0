@@ -102,18 +102,18 @@ function pushLogData (document) {
 }
 
 // List the questions to be asked
-var questionsList = Array ();
-questionsList[0] = 'How are you feeling today? (10=Amazing, 1=Bad)';
-questionsList[1] = 'Team Enjoyment? (10=Amazing, 1=Bad)';
-questionsList[2] = 'Session Intensity? (10=High, 1=Low)';
-questionsList[3] = 'Freshness? (10=High, 1=Low)';
-questionsList[4] = 'Sleep Quality? (10=High, 1=Low)';
-questionsList[5] = 'Muscle Health? (10=High, 1=Low)';
-questionsList[6] = 'Happiness? (10=High, 1=Low)';
-questionsList[7] = 'Mood? (10=Good, 1=Bad)';
-questionsList[8] = 'Wellness? (10=Good, 1=Bad)';
-questionsList[9] = 'What was the objective of the Session? (text)';
-questionsList[10] = 'What did you learn or improve? (text)';
+var InGameButtonList = Array ();
+InGameButtonList[0] = 'Completed Pass';
+InGameButtonList[1] = 'Attempted Pass';
+InGameButtonList[2] = 'Successful Dribble';
+InGameButtonList[3] = 'Attempted Dribble';
+InGameButtonList[4] = 'Successful Trackle';
+InGameButtonList[5] = 'Attempted Tackle';
+InGameButtonList[6] = 'Shot';
+InGameButtonList[7] = 'Goal';
+InGameButtonList[8] = 'Scanning';
+InGameButtonList[9] = 'In Space';
+InGameButtonList[10] = 'Substituted Out';
 
 function logData () {
 // function logData (session, question, response) {
@@ -129,10 +129,10 @@ var logDataArray = Array();
 
 
 //additional inputHints not supported in botbuilder 3.4.4 - TODO put these back in 
-// var numberPromptOptions = { speak: questionsList[0], inputHint: builder.InputHint.expectingInput,
+// var numberPromptOptions = { speak: InGameButtonList[0], inputHint: builder.InputHint.expectingInput,
 //                 maxRetries: 3, minValue: 1, maxValue: 10, retryPrompt: 'Not a valid option'};
 
-// var textPromptOptions = { speak: questionsList[0], inputHint: builder.InputHint.expectingInput,
+// var textPromptOptions = { speak: InGameButtonList[0], inputHint: builder.InputHint.expectingInput,
 //                 maxRetries: 3, retryPrompt: 'Not a valid option'};
 
 var numberPromptOptions = { 
@@ -210,62 +210,62 @@ bot.dialog('/survey', [
         session.send('Hi '+ session.message.user.name + '! Please answer a few questions about training today.');
         logResponse(session, 'User Connected?', 'Successfully' );
         session.userData.lastSurveyDate = today;
-        builder.Prompts.number( session, questionsList[0], numberPromptOptions );
+        builder.Prompts.number( session, InGameButtonList[0], numberPromptOptions );
         },
     function (session, results) {
-        logResponse(session, questionsList[0], results.response);
-        builder.Prompts.number( session, questionsList[1], numberPromptOptions );
+        logResponse(session, InGameButtonList[0], results.response);
+        builder.Prompts.number( session, InGameButtonList[1], numberPromptOptions );
         // next();
     },
         function (session, results) {
-        logResponse(session, questionsList[1], results.response);
-        builder.Prompts.number( session, questionsList[2], numberPromptOptions );
+        logResponse(session, InGameButtonList[1], results.response);
+        builder.Prompts.number( session, InGameButtonList[2], numberPromptOptions );
         // next();
     },
         function (session, results) {
-        logResponse(session, questionsList[2], results.response);
-        builder.Prompts.number( session, questionsList[3], numberPromptOptions );
+        logResponse(session, InGameButtonList[2], results.response);
+        builder.Prompts.number( session, InGameButtonList[3], numberPromptOptions );
         // next();
     },
         function (session, results, next) {
-        logResponse(session, questionsList[3], results.response);
-        builder.Prompts.number( session, questionsList[4], numberPromptOptions );
+        logResponse(session, InGameButtonList[3], results.response);
+        builder.Prompts.number( session, InGameButtonList[4], numberPromptOptions );
         // next();
     },
         function (session, results, next) {
-        logResponse(session, questionsList[4], results.response);
-        builder.Prompts.number( session, questionsList[5], numberPromptOptions );
+        logResponse(session, InGameButtonList[4], results.response);
+        builder.Prompts.number( session, InGameButtonList[5], numberPromptOptions );
         // next();
     },
         function (session, results, next) {
-        logResponse(session, questionsList[5], results.response);
-        builder.Prompts.number( session, questionsList[6], numberPromptOptions );
+        logResponse(session, InGameButtonList[5], results.response);
+        builder.Prompts.number( session, InGameButtonList[6], numberPromptOptions );
         // next();
     },
         function (session, results, next) {
-        logResponse(session, questionsList[6], results.response);
-        builder.Prompts.number( session, questionsList[7], numberPromptOptions );
+        logResponse(session, InGameButtonList[6], results.response);
+        builder.Prompts.number( session, InGameButtonList[7], numberPromptOptions );
         // next();
     },
         function (session, results, next) {
-        logResponse(session, questionsList[7], results.response);
-        builder.Prompts.number( session, questionsList[8], numberPromptOptions );
+        logResponse(session, InGameButtonList[7], results.response);
+        builder.Prompts.number( session, InGameButtonList[8], numberPromptOptions );
         // next();
     },
         function (session, results, next) {
-        logResponse(session, questionsList[8], results.response);
-        builder.Prompts.text( session, questionsList[9], textPromptOptions );
+        logResponse(session, InGameButtonList[8], results.response);
+        builder.Prompts.text( session, InGameButtonList[9], textPromptOptions );
         // next();
     },
         function (session, results, next) {
-        logResponse(session, questionsList[9], results.response);
-        builder.Prompts.text( session, questionsList[10], textPromptOptions );
+        logResponse(session, InGameButtonList[9], results.response);
+        builder.Prompts.text( session, InGameButtonList[10], textPromptOptions );
         // next();
     },
 
     function (session, results) {
         session.send('Thanks for all your answers. See you soon!');
-        logResponse(session, questionsList[10], results.response);
+        logResponse(session, InGameButtonList[10], results.response);
         if (!results.response) {
             // exhausted attemps and no selection, start over
             session.send('Ooops! Too many attempts :( But don\'t worry, I\'m handling that exception and you can try again!');
