@@ -124,7 +124,7 @@ var textPromptOptions = {
 function logResponse (session, player, status) {
         oLogData = new logData();
         oLogData.user = session.message.user.name;
-        oLogData.player = player.slice(0,player.indexOf('?')+1);
+        oLogData.player = player;
         oLogData.status = status;
         console.log('attempting write to docdb');
         getDBDocument(oLogData)
@@ -329,6 +329,7 @@ bot.dialog('playerAndGameDetails', function (session) {
     var msg = new builder.Message(session);
     msg.attachmentLayout(builder.AttachmentLayout.carousel)
     msg.attachments([
+
         new builder.HeroCard(session)
         .title("Player Details")
         .subtitle("Click to update information")
@@ -338,8 +339,7 @@ bot.dialog('playerAndGameDetails', function (session) {
             builder.CardAction.imBack(session, "Update Player Name", "Name: " + session.userData.playerName ),
             builder.CardAction.imBack(session, "Update Player Number", "Number: " + session.userData.playerNumber ),
             builder.CardAction.imBack(session, "Update Team", "Team: " + session.userData.playerTeam ),
-            builder.CardAction.imBack(session, "Update Club", "Club: " + session.userData.playerClub ),
-            builder.CardAction.imBack(session, "Delete Player Data", "Delete Player Data" ),
+            builder.CardAction.imBack(session, "Update Club", "Club: " + session.userData.playerClub )
         ]),
         new builder.HeroCard(session)
             .title("Game Details")
@@ -347,11 +347,21 @@ bot.dialog('playerAndGameDetails', function (session) {
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
+                builder.CardAction.imBack(session, "Kick Off", "Kick Off"),
+                builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" ),
                 builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.conversationData.opponentTeam ),
                 builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.conversationData.opponentClub ),
                 builder.CardAction.imBack(session, "Update Game Location", "Game Location: " + session.conversationData.gameLocation ),
-                builder.CardAction.imBack(session, "Update Game Field", "Field Number: " + session.conversationData.gameField ),
+                builder.CardAction.imBack(session, "Update Game Field", "Field Number: " + session.conversationData.gameField )
+            ]),
+            new builder.HeroCard(session)
+            .title("Maintenance")
+            .subtitle("Click to update information")
+            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
+            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+            .buttons([
                 builder.CardAction.imBack(session, "Delete Game Data", "Delete Game Data" ),
+                builder.CardAction.imBack(session, "Delete Player Data", "Delete Player Data" )
             ])
 
     ]);
@@ -364,8 +374,8 @@ bot.dialog('inGameTracking', function (session) {
     msg.attachmentLayout(builder.AttachmentLayout.carousel)
     msg.attachments([
         new builder.HeroCard(session)
-            .title("In Game Tracking - #%s", session.userData.playerNumber )
-            // .subtitle("press BUttons when you see activity")
+            .title("Tracking Player #%s", session.userData.playerNumber )
+            .subtitle("Click to log activity")
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
@@ -378,8 +388,8 @@ bot.dialog('inGameTracking', function (session) {
 
             ]),
             new builder.HeroCard(session)
-            .title("In Game Tracking - #%s", session.userData.playerNumber )
-            // .subtitle("press BUttons when you see activity")
+            .title("Tracking Player #%s", session.userData.playerNumber )
+            .subtitle("Click to log activity")
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
@@ -387,11 +397,12 @@ bot.dialog('inGameTracking', function (session) {
                 builder.CardAction.imBack(session, "Goal", "Goal"),
                 builder.CardAction.imBack(session, "In Space", "In Space"),
                 builder.CardAction.imBack(session, "Scanning", "Scanning"),
+                builder.CardAction.imBack(session, "Substituted In", "Substituted In"),
                 builder.CardAction.imBack(session, "Substituted Out", "Substituted Out")
             ]),
             new builder.HeroCard(session)
-            .title("In Game Tracking - #%s", session.userData.playerNumber )
-            // .subtitle("press BUttons when you see activity")
+            .title("Tracking Player #%s", session.userData.playerNumber )
+            .subtitle("Click to log activity")
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
@@ -412,6 +423,7 @@ var today = new Date().toLocaleDateString();
 // Add dialog to handle button click
 bot.dialog('attemptedPassButtonClick', [
     function (session) {
+        logResponse (session, session.userData.playerNumber, 'Attempted Pass');
         session.send("attempted pass Logged").endDialog();
     }
 ]).triggerAction({ matches: /attempted pass/i });
@@ -419,6 +431,7 @@ bot.dialog('attemptedPassButtonClick', [
 // Add dialog to handle button click
 bot.dialog('completedPassButtonClick', [
     function (session) {
+        logResponse (session, session.userData.playerNumber, 'Completed Pass');
         session.send("completed pass Logged").endDialog();
     }
 ]).triggerAction({ matches: /completed pass/i });
@@ -426,6 +439,7 @@ bot.dialog('completedPassButtonClick', [
 // Add dialog to handle button click
 bot.dialog('successfulDribbleButtonClick', [
     function (session) {
+        logResponse (session, session.userData.playerNumber, 'Successful Dribble');
         session.send("successful dribble Logged").endDialog();
     }
 ]).triggerAction({ matches: /successful dribble/i });
@@ -433,6 +447,7 @@ bot.dialog('successfulDribbleButtonClick', [
 // Add dialog to handle button click
 bot.dialog('attemptedDribbleButtonClick', [
     function (session) {
+        logResponse (session, session.userData.playerNumber, 'Attempted Dribble');
         session.send("Attempted dribble Logged").endDialog();
     }
 ]).triggerAction({ matches: /attempted dribble/i });
@@ -440,44 +455,118 @@ bot.dialog('attemptedDribbleButtonClick', [
 // Add dialog to handle button click
 bot.dialog('attemptedTackleButtonClick', [
     function (session) {
+        logResponse (session, session.userData.playerNumber, 'Attempted Tackle');
         session.send("attempted tackle Logged").endDialog();
     }
 ]).triggerAction({ matches: /attempted tackle/i });
 
 // Add dialog to handle button click
 bot.dialog('successfulTackleButtonClick', [
-    function (session) {session.send("successful tackle Logged").endDialog();}]).triggerAction({ matches: /successful tackle/i });
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Successful Tackle');
+        session.send("successful tackle Logged").endDialog();}
+]).triggerAction({ matches: /successful tackle/i });
 
-
-
-bot.dialog('welcome', [ 
-    function(session, args) {
-        builder.Prompts.confirm(session, 'Would you like your name added to the Sports Science Survey list?');
-        },
-
-    function (session, results) {
-        console.log('Response is ', results.response);
-        if(results.response){
-            savedAddress = session.message.address;
-            console.log('Saved Address ', savedAddress);
-            session.endDialog('Great - Thanks! I\'ve added you to the list and you\'ll receive your first survey in the next few days');
-            }
-        else 
-            {
-              session.endDialog('OK, bye!');
-            }
+// Add dialog to handle button click
+bot.dialog('shotButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Shot');
+        session.send("Shot Logged").endDialog();
     }
-    ]);
+]).triggerAction({ matches: /shot/i });
 
+// Add dialog to handle button click
+bot.dialog('goalButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Goal');
+        session.send("Goal Logged").endDialog();
+    }
+]).triggerAction({ matches: /goal/i });
 
+// Add dialog to handle button click
+bot.dialog('inSpaceButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'In Space');
+        session.send("successful dribble Logged").endDialog();
+    }
+]).triggerAction({ matches: /in space/i });
 
-function sendProactiveMessage(addr) {
-  var msg = new builder.Message().address(addr);
-  msg.text('Hello, this is a notification');
-  msg.textLocale('en-US');
-  bot.send(msg);
-}
+// Add dialog to handle button click
+bot.dialog('scanningButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Scanning');
+        session.send("Scanning Logged").endDialog();
+    }
+]).triggerAction({ matches: /scanning/i });
 
+// Add dialog to handle button click
+bot.dialog('substitutedInButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Substituted In');
+        session.send("Substituted In Logged").endDialog();
+    }
+]).triggerAction({ matches: /substituted in/i });
+
+// Add dialog to handle button click
+bot.dialog('substitutedOutButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Substituted Out');
+        session.send("Substituted Out Logged").endDialog();}
+]).triggerAction({ matches: /substituted out/i });
+
+// Add dialog to handle button click
+bot.dialog('cornerButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Corner');
+        session.send("Corner Logged").endDialog();
+    }
+]).triggerAction({ matches: /corner/i });
+
+// Add dialog to handle button click
+bot.dialog('freeKickButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Free Kick');
+        session.send("Free Kick Logged").endDialog();
+    }
+]).triggerAction({ matches: /free kick/i });
+
+// Add dialog to handle button click
+bot.dialog('penaltyKickButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Penalty');
+        session.send("Penalty Logged").endDialog();
+    }
+]).triggerAction({ matches: /penalty kick/i });
+
+// Add dialog to handle button click
+bot.dialog('fouledButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Fouled');
+        session.send("Fouled Logged").endDialog();
+    }
+]).triggerAction({ matches: /fouled/i });
+
+// Add dialog to handle button click
+bot.dialog('committedFoulButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Committed Foul');
+        session.send("Committed Foul Logged").endDialog();
+    }
+]).triggerAction({ matches: /committed foul/i });
+
+// Add dialog to handle button click
+bot.dialog('kickOffButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Kick Off');
+        session.send("Kick Off Logged").endDialog();}
+]).triggerAction({ matches: /kick off/i });
+
+// Add dialog to handle button click
+bot.dialog('finalWhistleButtonClick', [
+    function (session) {
+        logResponse (session, session.userData.playerNumber, 'Final Whistle');
+        session.send("Final Whistle Logged").endDialog();}
+]).triggerAction({ matches: /final whistle/i });
 
 // web interface
 server.get('/', restify.serveStatic({
