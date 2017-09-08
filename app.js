@@ -101,19 +101,7 @@ function pushLogData (document) {
     console.log('log pushed to array')
 }
 
-// List the questions to be asked
-var InGameButtonList = Array ();
-InGameButtonList[0] = 'Completed Pass';
-InGameButtonList[1] = 'Attempted Pass';
-InGameButtonList[2] = 'Successful Dribble';
-InGameButtonList[3] = 'Attempted Dribble';
-InGameButtonList[4] = 'Successful Trackle';
-InGameButtonList[5] = 'Attempted Tackle';
-InGameButtonList[6] = 'Shot';
-InGameButtonList[7] = 'Goal';
-InGameButtonList[8] = 'Scanning';
-InGameButtonList[9] = 'In Space';
-InGameButtonList[10] = 'Substituted Out';
+
 
 function logData () {
 // function logData (session, player, status) {
@@ -126,14 +114,6 @@ function logData () {
 };
 
 var logDataArray = Array();
-
-
-//additional inputHints not supported in botbuilder 3.4.4 - TODO put these back in 
-// var numberPromptOptions = { speak: InGameButtonList[0], inputHint: builder.InputHint.expectingInput,
-//                 maxRetries: 3, minValue: 1, maxValue: 10, retryPrompt: 'Not a valid option'};
-
-// var textPromptOptions = { speak: InGameButtonList[0], inputHint: builder.InputHint.expectingInput,
-//                 maxRetries: 3, retryPrompt: 'Not a valid option'};
 
 var numberPromptOptions = { 
                 maxRetries: 3, minValue: 1, maxValue: 10, retryPrompt: 'Not a valid option'};
@@ -176,7 +156,7 @@ var bot = new builder.UniversalBot(connector, [
         if (session.userData.playerNumber == undefined) {session.beginDialog('askForPlayerNumber')} else {next()}
     },
     function (session, results, next) {
-        session.beginDialog('playerDetails');       
+        session.beginDialog('playerAndGameDetails');
         session.beginDialog('inGameTracking');
         session.endDialog();
     }
@@ -264,6 +244,120 @@ bot.dialog('playerDetails', function (session) {
 });
 
 
+// Dialog to ask for opponent team 
+bot.dialog('askForOpponentTeam', [
+    function (session) {
+        builder.Prompts.text(session, "Please provide the opponent's team name");
+    },
+    function (session, results) {
+        session.conversationData.opponentTeam = results.response;
+        session.endDialogWithResult(results);
+    }
+]).triggerAction({ matches: /update opponent team/i });
+
+// Dialog to ask for opponent club 
+bot.dialog('askForOpponentClub', [
+    function (session) {
+        builder.Prompts.text(session, "Please provide the opponent's club name");
+    },
+    function (session, results) {
+        session.conversationData.opponentClub = results.response;
+        session.endDialogWithResult(results);
+    }
+]).triggerAction({ matches: /update opponent club/i });
+
+
+// Dialog to ask for player team 
+bot.dialog('askForGameLocation', [
+    function (session) {
+        builder.Prompts.text(session, "Please provide the game location");
+    },
+    function (session, results) {
+        session.conversationData.gameLocation = results.response;
+        session.endDialogWithResult(results);
+    }
+]).triggerAction({ matches: /update game location/i });
+
+// Dialog to ask for player team 
+bot.dialog('askForGameField', [
+    function (session) {
+        builder.Prompts.text(session, "Please provide the field number");
+    },
+    function (session, results) {
+        session.conversationData.gameField = results.response;
+        session.endDialogWithResult(results);
+    }
+]).triggerAction({ matches: /update game field/i });
+
+// Dialog to delete player data 
+bot.dialog('deleteGameData', [
+    function (session) {
+        session.conversationData.opponentTeam = null;
+        session.conversationData.opponentClub = null;
+        session.conversationData.gameLocation = null;
+        session.conversationData.gameField = null;
+        session.send('Game Data Details Deleted');
+        session.endDialog()
+    }
+]).triggerAction({ matches: /Delete Game Data/i });
+
+
+//dialog to display game details
+bot.dialog('gameDetails', function (session) {
+    var msg = new builder.Message(session);
+    msg.attachmentLayout(builder.AttachmentLayout.carousel)
+    msg.attachments([
+            new builder.HeroCard(session)
+            .title("Game Details")
+            .subtitle("Click to update information")
+            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
+            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+            .buttons([
+                builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.conversationData.opponentTeam ),
+                builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.conversationData.opponentClub ),
+                builder.CardAction.imBack(session, "Update Game Location", "Game Location: " + session.conversationData.gameLocation ),
+                builder.CardAction.imBack(session, "Update Game Field", "Field Number: " + session.conversationData.gameField ),
+                builder.CardAction.imBack(session, "Delete Game Data", "Delete Game Data" ),
+            ])
+
+    ]);
+    session.send(msg).endDialog();
+});
+
+//dialog to display player and game details
+bot.dialog('playerAndGameDetails', function (session) {
+    var msg = new builder.Message(session);
+    msg.attachmentLayout(builder.AttachmentLayout.carousel)
+    msg.attachments([
+        new builder.HeroCard(session)
+        .title("Player Details")
+        .subtitle("Click to update information")
+        // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
+        // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+        .buttons([
+            builder.CardAction.imBack(session, "Update Player Name", "Name: " + session.userData.playerName ),
+            builder.CardAction.imBack(session, "Update Player Number", "Number: " + session.userData.playerNumber ),
+            builder.CardAction.imBack(session, "Update Team", "Team: " + session.userData.playerTeam ),
+            builder.CardAction.imBack(session, "Update Club", "Club: " + session.userData.playerClub ),
+            builder.CardAction.imBack(session, "Delete Player Data", "Delete Player Data" ),
+        ]),
+        new builder.HeroCard(session)
+            .title("Game Details")
+            .subtitle("Click to update information")
+            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
+            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+            .buttons([
+                builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.conversationData.opponentTeam ),
+                builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.conversationData.opponentClub ),
+                builder.CardAction.imBack(session, "Update Game Location", "Game Location: " + session.conversationData.gameLocation ),
+                builder.CardAction.imBack(session, "Update Game Field", "Field Number: " + session.conversationData.gameField ),
+                builder.CardAction.imBack(session, "Delete Game Data", "Delete Game Data" ),
+            ])
+
+    ]);
+    session.send(msg).endDialog();
+});
+
 // Dialog to ask for player name 
 bot.dialog('inGameTracking', function (session) {
     var msg = new builder.Message(session);
@@ -293,7 +387,7 @@ bot.dialog('inGameTracking', function (session) {
                 builder.CardAction.imBack(session, "Goal", "Goal"),
                 builder.CardAction.imBack(session, "In Space", "In Space"),
                 builder.CardAction.imBack(session, "Scanning", "Scanning"),
-                builder.CardAction.imBack(session, "Sustituted Out", "Sustituted Out")
+                builder.CardAction.imBack(session, "Substituted Out", "Substituted Out")
             ]),
             new builder.HeroCard(session)
             .title("In Game Tracking - #%s", session.userData.playerNumber )
