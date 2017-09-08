@@ -116,13 +116,13 @@ InGameButtonList[9] = 'In Space';
 InGameButtonList[10] = 'Substituted Out';
 
 function logData () {
-// function logData (session, question, response) {
+// function logData (session, player, status) {
     // id is the timestamp
     var date = new Date();
     this.id = date.toISOString(),
     this.user = 'Admin',
-    this.question = 'Bot Initialized',
-    this.response = 'Successfully'
+    this.player = 'Bot Initialized',
+    this.status = 'Successfully'
 };
 
 var logDataArray = Array();
@@ -141,11 +141,11 @@ var numberPromptOptions = {
 var textPromptOptions = { 
                 maxRetries: 3, retryPrompt: 'Not a valid option'};
 
-function logResponse (session, question, response) {
+function logResponse (session, player, status) {
         oLogData = new logData();
         oLogData.user = session.message.user.name;
-        oLogData.question = question.slice(0,question.indexOf('?')+1);
-        oLogData.response = response;
+        oLogData.player = player.slice(0,player.indexOf('?')+1);
+        oLogData.status = status;
         console.log('attempting write to docdb');
         getDBDocument(oLogData)
             .then(()  =>   console.log(oLogData))
@@ -165,114 +165,198 @@ server.post('/api/messages', connector.listen());
 
 var savedAddress;
 
+
 // Receive messages from the user and respond by echoing each message back (prefixed with 'You said:')
-var bot = new builder.UniversalBot(connector)
-var today = new Date().toLocaleDateString();
-
-function startProactiveDialog(addr) {
-  // set resume:false to resume at the root dialog
-  // else true to resume the previous dialog
-  bot.beginDialog(addr, "*:/survey", {}, { resume: true });  
-}
-
-
-
-
-
-
-bot.dialog('/', [
-    // function (session, args, next) {
-    //     savedAddress = session.message.address;
-    //     if (session.userData.lastSurveyDate === false) {
-    //     //check for user already completed today's survey
-    //     // if (session.userData.lastSurveyDate === today) {
-    //         session.endDialog('You\'ve already given feedback on today\'s session. Thanks!');
-    //     } 
-    // },
-    function (session) {
-        session.send('Hi '+ session.message.user.name + '! Please answer a few questions about training today.');
-        logResponse(session, 'User Connected?', 'Successfully' );
-        session.userData.lastSurveyDate = today;
-        builder.Prompts.number( session, InGameButtonList[0], numberPromptOptions );
-        },
-    function (session, results) {
-        logResponse(session, InGameButtonList[0], results.response);
-        builder.Prompts.number( session, InGameButtonList[1], numberPromptOptions );
-        // next();
+var bot = new builder.UniversalBot(connector, [
+    function (session, args, next) {
+        session.send("Welcome to the Player Tracker. ");
+        if (session.userData.playerName == undefined) {session.beginDialog('askForPlayerName');} else {next()}
     },
-        function (session, results) {
-        logResponse(session, InGameButtonList[1], results.response);
-        builder.Prompts.number( session, InGameButtonList[2], numberPromptOptions );
-        // next();
+    function (session, results, next) {
+        if (session.userData.playerNumber == undefined) {session.beginDialog('askForPlayerNumber')} else {next()}
     },
-        function (session, results) {
-        logResponse(session, InGameButtonList[2], results.response);
-        builder.Prompts.number( session, InGameButtonList[3], numberPromptOptions );
-        // next();
-    },
-        function (session, results, next) {
-        logResponse(session, InGameButtonList[3], results.response);
-        builder.Prompts.number( session, InGameButtonList[4], numberPromptOptions );
-        // next();
-    },
-        function (session, results, next) {
-        logResponse(session, InGameButtonList[4], results.response);
-        builder.Prompts.number( session, InGameButtonList[5], numberPromptOptions );
-        // next();
-    },
-        function (session, results, next) {
-        logResponse(session, InGameButtonList[5], results.response);
-        builder.Prompts.number( session, InGameButtonList[6], numberPromptOptions );
-        // next();
-    },
-        function (session, results, next) {
-        logResponse(session, InGameButtonList[6], results.response);
-        builder.Prompts.number( session, InGameButtonList[7], numberPromptOptions );
-        // next();
-    },
-        function (session, results, next) {
-        logResponse(session, InGameButtonList[7], results.response);
-        builder.Prompts.number( session, InGameButtonList[8], numberPromptOptions );
-        // next();
-    },
-        function (session, results, next) {
-        logResponse(session, InGameButtonList[8], results.response);
-        builder.Prompts.text( session, InGameButtonList[9], textPromptOptions );
-        // next();
-    },
-        function (session, results, next) {
-        logResponse(session, InGameButtonList[9], results.response);
-        builder.Prompts.text( session, InGameButtonList[10], textPromptOptions );
-        // next();
-    },
-
-    function (session, results) {
-        session.send('Thanks for all your answers. See you soon!');
-        logResponse(session, InGameButtonList[10], results.response);
-        if (!results.response) {
-            // exhausted attemps and no selection, start over
-            session.send('Ooops! Too many attempts :( But don\'t worry, I\'m handling that exception and you can try again!');
-            return session.endDialog();
-        }
-
-
-
-        // on error, start over
-
-        session.on('error', function (err) {
-
-            session.send('Failed with message: %s', err.message);
-
-            session.endDialog();
-
-        });
-
-
-
+    function (session, results, next) {
+        session.beginDialog('playerDetails');       
+        session.beginDialog('inGameTracking');
+        session.endDialog();
     }
 ]);
 
-bot.dialog('/welcome', [ 
+
+// Dialog to ask for player name 
+bot.dialog('askForPlayerName', [
+    function (session) {
+        builder.Prompts.text(session, "Please provide your player's name");
+    },
+    function (session, results) {
+        session.userData.playerName = results.response;
+        session.endDialogWithResult(results);
+    }
+]).triggerAction({ matches: /update player name/i });
+
+// Dialog to ask for player number 
+bot.dialog('askForPlayerNumber', [
+    function (session) {
+        builder.Prompts.number(session, "Please provide your player's number");
+    },
+    function (session, results) {
+        session.userData.playerNumber = results.response;
+        session.endDialogWithResult(results);
+    }
+]).triggerAction({ matches: /update player number/i });
+
+
+// Dialog to ask for player team 
+bot.dialog('askForPlayerTeam', [
+    function (session) {
+        builder.Prompts.text(session, "Please provide your player's team name");
+    },
+    function (session, results) {
+        session.userData.playerTeam = results.response;
+        session.endDialogWithResult(results);
+    }
+]).triggerAction({ matches: /update team/i });
+
+// Dialog to ask for player team 
+bot.dialog('askForPlayerClub', [
+    function (session) {
+        builder.Prompts.text(session, "Please provide your player's club name");
+    },
+    function (session, results) {
+        session.userData.playerClub = results.response;
+        session.endDialogWithResult(results);
+    }
+]).triggerAction({ matches: /update club/i });
+
+// Dialog to delete player data 
+bot.dialog('deletePlayerData', [
+    function (session) {
+        session.userData.playerName = null;
+        session.userData.playerNumber = null;
+        session.userData.playerTeam = null;
+        session.userData.playerClub = null;
+        session.send('Player Data Details Deleted');
+        session.endDialog()
+    }
+]).triggerAction({ matches: /Delete Player Data/i });
+
+
+//dialog to display player details
+bot.dialog('playerDetails', function (session) {
+    var msg = new builder.Message(session);
+    msg.attachmentLayout(builder.AttachmentLayout.carousel)
+    msg.attachments([
+            new builder.HeroCard(session)
+            .title("Player Details")
+            .subtitle("Click to update information")
+            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
+            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+            .buttons([
+                builder.CardAction.imBack(session, "Update Player Name", "Name: " + session.userData.playerName ),
+                builder.CardAction.imBack(session, "Update Player Number", "Number: " + session.userData.playerNumber ),
+                builder.CardAction.imBack(session, "Update Team", "Team: " + session.userData.playerTeam ),
+                builder.CardAction.imBack(session, "Update Club", "Club: " + session.userData.playerClub ),
+                builder.CardAction.imBack(session, "Delete Player Data", "Delete Player Data" ),
+            ])
+
+    ]);
+    session.send(msg).endDialog();
+});
+
+
+// Dialog to ask for player name 
+bot.dialog('inGameTracking', function (session) {
+    var msg = new builder.Message(session);
+    msg.attachmentLayout(builder.AttachmentLayout.carousel)
+    msg.attachments([
+        new builder.HeroCard(session)
+            .title("In Game Tracking - #%s", session.userData.playerNumber )
+            // .subtitle("press BUttons when you see activity")
+            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
+            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+            .buttons([
+                builder.CardAction.imBack(session, "Completed Pass", "Completed Pass"),
+                builder.CardAction.imBack(session, "Attempted Pass", "Attempted Pass"),
+                builder.CardAction.imBack(session, "Successful Dribble", "Successful Dribble"),
+                builder.CardAction.imBack(session, "Attempted Dribble", "Attempted Dribble"),
+                builder.CardAction.imBack(session, "Successful Tackle", "Successful Tackle"),
+                builder.CardAction.imBack(session, "Attempted Tackle", "Attempted Tackle"),
+
+            ]),
+            new builder.HeroCard(session)
+            .title("In Game Tracking - #%s", session.userData.playerNumber )
+            // .subtitle("press BUttons when you see activity")
+            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
+            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+            .buttons([
+                builder.CardAction.imBack(session, "Shot", "Shot"),
+                builder.CardAction.imBack(session, "Goal", "Goal"),
+                builder.CardAction.imBack(session, "In Space", "In Space"),
+                builder.CardAction.imBack(session, "Scanning", "Scanning"),
+                builder.CardAction.imBack(session, "Sustituted Out", "Sustituted Out")
+            ]),
+            new builder.HeroCard(session)
+            .title("In Game Tracking - #%s", session.userData.playerNumber )
+            // .subtitle("press BUttons when you see activity")
+            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
+            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+            .buttons([
+                builder.CardAction.imBack(session, "Corner", "Corner"),
+                builder.CardAction.imBack(session, "Free Kick", "Free Kick"),
+                builder.CardAction.imBack(session, "Penalty Kick", "Penalty Kick"),
+                builder.CardAction.imBack(session, "Fouled", "Fouled"),
+                builder.CardAction.imBack(session, "Committed Foul", "Committed Foul")
+            ])
+
+    ]);
+    session.send(msg).endDialog();
+});
+
+var today = new Date().toLocaleDateString();
+
+
+// Add dialog to handle button click
+bot.dialog('attemptedPassButtonClick', [
+    function (session) {
+        session.send("attempted pass Logged").endDialog();
+    }
+]).triggerAction({ matches: /attempted pass/i });
+
+// Add dialog to handle button click
+bot.dialog('completedPassButtonClick', [
+    function (session) {
+        session.send("completed pass Logged").endDialog();
+    }
+]).triggerAction({ matches: /completed pass/i });
+
+// Add dialog to handle button click
+bot.dialog('successfulDribbleButtonClick', [
+    function (session) {
+        session.send("successful dribble Logged").endDialog();
+    }
+]).triggerAction({ matches: /successful dribble/i });
+
+// Add dialog to handle button click
+bot.dialog('attemptedDribbleButtonClick', [
+    function (session) {
+        session.send("Attempted dribble Logged").endDialog();
+    }
+]).triggerAction({ matches: /attempted dribble/i });
+
+// Add dialog to handle button click
+bot.dialog('attemptedTackleButtonClick', [
+    function (session) {
+        session.send("attempted tackle Logged").endDialog();
+    }
+]).triggerAction({ matches: /attempted tackle/i });
+
+// Add dialog to handle button click
+bot.dialog('successfulTackleButtonClick', [
+    function (session) {session.send("successful tackle Logged").endDialog();}]).triggerAction({ matches: /successful tackle/i });
+
+
+
+bot.dialog('welcome', [ 
     function(session, args) {
         builder.Prompts.confirm(session, 'Would you like your name added to the Sports Science Survey list?');
         },
