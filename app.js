@@ -108,6 +108,7 @@ function logData () {
     // id is the timestamp
     var date = new Date();
     this.id = date.toISOString(),
+    this.gameId = 'Not Configured'
     this.user = 'Admin',
     this.player = 'Bot Initialized',
     this.status = 'Successfully'
@@ -124,6 +125,7 @@ var textPromptOptions = {
 function logResponse (session, player, status) {
         oLogData = new logData();
         oLogData.user = session.message.user.name;
+        oLogData.gameId = session.userData.gameId;
         oLogData.player = player;
         oLogData.status = status;
         console.log('attempting write to docdb');
@@ -154,8 +156,23 @@ function initializeTrackingData(session) {
     session.conversationData.committedFoulCount = 0;
     session.conversationData.kickOffCount = 0;
     session.conversationData.finalWhistleCount = 0;
+    session.conversationData.assistCount = 0;
     console.log('Tracking Data Initialized');
 };
+
+function initializeGameData(session) {
+    var date = new Date();
+    var localDate = date + (date.getTimezoneOffset());
+    // session.userData.gameId = localDate.toISOString(),
+    session.userData.gameId = localDate,
+    console.log('Game Id set >>>>' + session.userData.gameId);
+    session.userData.matchState = 'Pre-Game';
+    console.log('Match State Changed >>>>' + session.userData.matchState);
+    session.conversationData.opponentTeam = null;
+    session.conversationData.opponentClub = null;
+    session.conversationData.gameLocation = null;
+    session.conversationData.gameField = null;
+}
 
 // Create chat connector for communicating with the Bot Framework Service
 var connector = new builder.ChatConnector({
@@ -337,12 +354,7 @@ bot.dialog('askForGameField', [
 // Dialog to delete player data 
 bot.dialog('deleteGameData', [
     function (session) {
-        session.userData.matchState = 'Pre-Game';
-        console.log('Match State Changed >>>>' + session.userData.matchState);
-        session.conversationData.opponentTeam = null;
-        session.conversationData.opponentClub = null;
-        session.conversationData.gameLocation = null;
-        session.conversationData.gameField = null;
+        initializeGameData(session)
         initializeTrackingData(session);
         session.send('Game Data Details Deleted');
         session.beginDialog('playerAndGameDetails').endDialog()
@@ -444,7 +456,7 @@ bot.dialog('inGameTracking', function (session) {
             .buttons([
                 builder.CardAction.imBack(session, "Shot", "Shot "+ session.conversationData.shotCount),
                 builder.CardAction.imBack(session, "Goal", "Goal "+ session.conversationData.goalCount),
-                builder.CardAction.imBack(session, "In Space", "In Space "+ session.conversationData.inSpaceCount),
+                builder.CardAction.imBack(session, "Assist", "Assist "+ session.conversationData.assistCount),
                 builder.CardAction.imBack(session, "Scanning", "Scanning "+ session.conversationData.scanningCount),
                 builder.CardAction.imBack(session, "Substituted In", "Substituted In "+ session.conversationData.substitutedInCount),
                 builder.CardAction.imBack(session, "Substituted Out", "Substituted Out "+ session.conversationData.susbstitutedOutCount)
@@ -469,6 +481,15 @@ bot.dialog('inGameTracking', function (session) {
 
 var today = new Date().toLocaleDateString();
 
+
+// Add dialog to handle button click
+bot.dialog('assistButtonClick', [
+    function (session) {
+        session.conversationData.assistCount ++;
+        logResponse (session, session.userData.playerNumber, 'Assist');
+        session.beginDialog('inGameTracking').endDialog();
+    }
+]).triggerAction({ matches: /assist/i });
 
 // Add dialog to handle button click
 bot.dialog('attemptedPassButtonClick', [
