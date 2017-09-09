@@ -162,12 +162,13 @@ function initializeTrackingData(session) {
 
 function initializeGameData(session) {
     var date = new Date();
-    var localDate = date + (date.getTimezoneOffset());
+    var localDate = date.toLocaleString();
     // session.userData.gameId = localDate.toISOString(),
     session.userData.gameId = localDate,
     console.log('Game Id set >>>>' + session.userData.gameId);
     session.userData.matchState = 'Pre-Game';
     console.log('Match State Changed >>>>' + session.userData.matchState);
+    session.conversationData.playerTeamHomeAway = 'Home'; 
     session.conversationData.opponentTeam = null;
     session.conversationData.opponentClub = null;
     session.conversationData.gameLocation = null;
@@ -313,7 +314,7 @@ bot.dialog('askForOpponentTeam', [
     },
     function (session, results) {
         session.conversationData.opponentTeam = results.response;
-        session.endDialogWithResult(results);
+        session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update opponent team/i });
 
@@ -324,7 +325,7 @@ bot.dialog('askForOpponentClub', [
     },
     function (session, results) {
         session.conversationData.opponentClub = results.response;
-        session.endDialogWithResult(results);
+        session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update opponent club/i });
 
@@ -336,7 +337,7 @@ bot.dialog('askForGameLocation', [
     },
     function (session, results) {
         session.conversationData.gameLocation = results.response;
-        session.endDialogWithResult(results);
+        session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update game location/i });
 
@@ -347,7 +348,7 @@ bot.dialog('askForGameField', [
     },
     function (session, results) {
         session.conversationData.gameField = results.response;
-        session.endDialogWithResult(results);
+        session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update game field/i });
 
@@ -409,6 +410,7 @@ bot.dialog('playerAndGameDetails', function (session) {
             .buttons([
                 builder.CardAction.imBack(session, "Kick Off", "Kick Off"),
                 // builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" ),
+                builder.CardAction.imBack(session, "Update Home Team", session.userData.playerClub + ": " + session.conversationData.playerTeamHomeAway ),
                 builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.conversationData.opponentTeam ),
                 builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.conversationData.opponentClub ),
                 builder.CardAction.imBack(session, "Update Game Location", "Game Location: " + session.conversationData.gameLocation ),
@@ -482,6 +484,17 @@ bot.dialog('inGameTracking', function (session) {
 var today = new Date().toLocaleDateString();
 
 
+// Dialog to ask for player team 
+bot.dialog('askForHomeTeam', [
+    function (session) {
+        builder.Prompts.choice(session, "Is "+ session.userData.playerName+"'s team Home or Away?", "Home|Away");
+    },
+    function (session, results) {
+        session.conversationData.playerTeamHomeAway = results.response.entity;
+        session.beginDialog('playerAndGameDetails').endDialog();
+    }
+]).triggerAction({ matches: /Update Home Team/i });
+    
 // Add dialog to handle button click
 bot.dialog('assistButtonClick', [
     function (session) {
