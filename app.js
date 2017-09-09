@@ -457,9 +457,9 @@ bot.dialog('inGameTracking', function (session) {
                 builder.CardAction.imBack(session, "Shot", "Shot "+ session.conversationData.shotCount),
                 builder.CardAction.imBack(session, "Goal", "Goal "+ session.conversationData.goalCount),
                 builder.CardAction.imBack(session, "Assist", "Assist "+ session.conversationData.assistCount),
-                builder.CardAction.imBack(session, "Scanning", "Scanning "+ session.conversationData.scanningCount),
-                builder.CardAction.imBack(session, "Substituted In", "Substituted In "+ session.conversationData.substitutedInCount),
-                builder.CardAction.imBack(session, "Substituted Out", "Substituted Out "+ session.conversationData.susbstitutedOutCount)
+                builder.CardAction.imBack(session, "Corner", "Corner "+ session.conversationData.cornerCount),
+                builder.CardAction.imBack(session, "Free Kick", "Free Kick "+ session.conversationData.freeKickCount),
+                builder.CardAction.imBack(session, "Penalty Kick", "Penalty Kick "+ session.conversationData.penaltyKickCount)
             ]),
             new builder.HeroCard(session)
             .title(session.userData.matchState + " Tracking Player #%s", session.userData.playerNumber )
@@ -467,9 +467,10 @@ bot.dialog('inGameTracking', function (session) {
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
-                builder.CardAction.imBack(session, "Corner", "Corner "+ session.conversationData.cornerCount),
-                builder.CardAction.imBack(session, "Free Kick", "Free Kick "+ session.conversationData.freeKickCount),
-                builder.CardAction.imBack(session, "Penalty Kick", "Penalty Kick "+ session.conversationData.penaltyKickCount),
+
+                builder.CardAction.imBack(session, "Scanning", "Scanning "+ session.conversationData.scanningCount),
+                builder.CardAction.imBack(session, "Substituted In", "Substituted In "+ session.conversationData.substitutedInCount),
+                builder.CardAction.imBack(session, "Substituted Out", "Substituted Out "+ session.conversationData.susbstitutedOutCount),
                 builder.CardAction.imBack(session, "Fouled", "Fouled "+ session.conversationData.fouledCount),
                 builder.CardAction.imBack(session, "Committed Foul", "Committed Foul "+ session.conversationData.committedFoulCount),
                 builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" )
@@ -515,6 +516,7 @@ bot.dialog('attemptedPassButtonClick', [
 bot.dialog('completedPassButtonClick', [
     function (session) {
         session.conversationData.completedPassCount ++;
+        session.conversationData.attemptedPassCount ++;
         logResponse (session, session.userData.playerNumber, 'Completed Pass');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -524,6 +526,7 @@ bot.dialog('completedPassButtonClick', [
 bot.dialog('successfulDribbleButtonClick', [
     function (session) {
         session.conversationData.successfulDribbleCount ++;
+        session.conversationData.attemptedDribbleCount ++;
         logResponse (session, session.userData.playerNumber, 'Successful Dribble');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -551,6 +554,7 @@ bot.dialog('attemptedTackleButtonClick', [
 bot.dialog('successfulTackleButtonClick', [
     function (session) {
         session.conversationData.successfulTackleCount ++;
+        session.conversationData.attemptedTackleCount ++;
         logResponse (session, session.userData.playerNumber, 'Successful Tackle');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -569,6 +573,7 @@ bot.dialog('shotButtonClick', [
 bot.dialog('goalButtonClick', [
     function (session) {
         session.conversationData.goalCount ++;
+        session.conversationData.shotCount ++;
         logResponse (session, session.userData.playerNumber, 'Goal');
         session.beginDialog('inGameTracking').endDialog();
     }
