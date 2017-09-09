@@ -134,6 +134,29 @@ function logResponse (session, player, status) {
 
 }
 
+function initializeTrackingData(session) {
+    session.conversationData.completedPassCount = 0;
+    session.conversationData.attemptedPassCount = 0;
+    session.conversationData.successfulDribbleCount = 0;
+    session.conversationData.attemptedDribbleCount = 0;
+    session.conversationData.successfulTackleCount = 0;
+    session.conversationData.attemptedTackleCount = 0;
+    session.conversationData.shotCount = 0;
+    session.conversationData.goalCount = 0;
+    session.conversationData.inSpaceCount = 0;
+    session.conversationData.scanningCount = 0;
+    session.conversationData.substitutedInCount = 0;
+    session.conversationData.susbstitutedOutCount = 0;
+    session.conversationData.cornerCount = 0;
+    session.conversationData.freeKickCount = 0;
+    session.conversationData.penaltyKickCount = 0;
+    session.conversationData.fouledCount = 0;
+    session.conversationData.committedFoulCount = 0;
+    session.conversationData.kickOffCount = 0;
+    session.conversationData.finalWhistleCount = 0;
+    console.log('Tracking Data Initialized');
+};
+
 // Create chat connector for communicating with the Bot Framework Service
 var connector = new builder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID || "644048c6-8d61-4d63-8810-3832d34862e1",
@@ -149,39 +172,36 @@ var savedAddress;
 // Receive messages from the user and respond by echoing each message back (prefixed with 'You said:')
 var bot = new builder.UniversalBot(connector, [
     function (session, args, next) {
+        console.log('Match State >>>>' + session.userData.matchState);
         session.send("Welcome to the Player Tracker. I'm here to help gather stats on your player's performance");
         session.send("Enter details of your player and the game, then you're all set to hit 'Kick Off'");
 
+//set up match state - validate states Pre-Game, 1st Half, Half Time, 2nd Half, Full Time
+        if (session.userData.matchState==undefined) {
+            session.userData.matchState = 'Pre-Game';
+            console.log('Match State Changed >>>>' + session.userData.matchState);
+        };
+        if (session.userData.matchState == 'Pre-Game') {
 //set up tracking data structure - using conversationData which persists across the conversation
-        session.conversationData.completedPassCount = 0;
-        session.conversationData.attemptedPassCount = 0;
-        session.conversationData.successfulDribbleCount = 0;
-        session.conversationData.attemptedDribbleCount = 0;
-        session.conversationData.successfulTackleCount = 0;
-        session.conversationData.attemptedTackleCount = 0;
-        session.conversationData.shotCount = 0;
-        session.conversationData.goalCount = 0;
-        session.conversationData.inSpaceCount = 0;
-        session.conversationData.scanningCount = 0;
-        session.conversationData.substitutedInCount = 0;
-        session.conversationData.susbstitutedOutCount = 0;
-        session.conversationData.cornerCount = 0;
-        session.conversationData.freeKickCount = 0;
-        session.conversationData.penaltyKickCount = 0;
-        session.conversationData.fouledCount = 0;
-        session.conversationData.committedFoulCount = 0;
-        session.conversationData.kickOffCount = 0;
-        session.conversationData.finalWhistleCount = 0;
-
-
-        if (session.userData.playerName == undefined) {session.beginDialog('askForPlayerName');} else {next()}
+            initializeTrackingData(session);
+        };
+        next();
     },
     function (session, results, next) {
-        if (session.userData.playerNumber == undefined) {session.beginDialog('askForPlayerNumber')} else {next()}
+        if (session.userData.playerName == undefined || session.userData.playerName == null ) 
+            {session.beginDialog('askForPlayerName');} 
+        else {next()}
     },
     function (session, results, next) {
-        session.beginDialog('playerAndGameDetails');
-        session.beginDialog('inGameTracking');
+        if (session.userData.playerNumber == undefined || session.userData.playerNumber == null ) 
+            {session.beginDialog('askForPlayerNumber')} 
+        else {next()}
+    },
+    function (session, results, next) {
+        if (session.userData.matchState == '1st Half' || session.userData.matchState == '2nd Half')
+                { session.beginDialog('inGameTracking') }
+            else
+                { session.beginDialog('playerAndGameDetails')}
         session.endDialog();
     }
 ]);
@@ -194,7 +214,7 @@ bot.dialog('askForPlayerName', [
     },
     function (session, results) {
         session.userData.playerName = results.response;
-        session.endDialogWithResult(results);
+        session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update player name/i });
 
@@ -205,7 +225,7 @@ bot.dialog('askForPlayerNumber', [
     },
     function (session, results) {
         session.userData.playerNumber = results.response;
-        session.endDialogWithResult(results);
+        session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update player number/i });
 
@@ -217,7 +237,7 @@ bot.dialog('askForPlayerTeam', [
     },
     function (session, results) {
         session.userData.playerTeam = results.response;
-        session.endDialogWithResult(results);
+        session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update team/i });
 
@@ -228,7 +248,7 @@ bot.dialog('askForPlayerClub', [
     },
     function (session, results) {
         session.userData.playerClub = results.response;
-        session.endDialogWithResult(results);
+        session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update club/i });
 
@@ -239,8 +259,9 @@ bot.dialog('deletePlayerData', [
         session.userData.playerNumber = null;
         session.userData.playerTeam = null;
         session.userData.playerClub = null;
+        initializeTrackingData(session);
         session.send('Player Data Details Deleted');
-        session.endDialog()
+        session.beginDialog('playerAndGameDetails').endDialog()
     }
 ]).triggerAction({ matches: /Delete Player Data/i });
 
@@ -316,12 +337,15 @@ bot.dialog('askForGameField', [
 // Dialog to delete player data 
 bot.dialog('deleteGameData', [
     function (session) {
+        session.userData.matchState = 'Pre-Game';
+        console.log('Match State Changed >>>>' + session.userData.matchState);
         session.conversationData.opponentTeam = null;
         session.conversationData.opponentClub = null;
         session.conversationData.gameLocation = null;
         session.conversationData.gameField = null;
+        initializeTrackingData(session);
         session.send('Game Data Details Deleted');
-        session.endDialog()
+        session.beginDialog('playerAndGameDetails').endDialog()
     }
 ]).triggerAction({ matches: /Delete Game Data/i });
 
@@ -355,7 +379,7 @@ bot.dialog('playerAndGameDetails', function (session) {
     msg.attachments([
 
         new builder.HeroCard(session)
-        .title("Player Details")
+        .title(session.userData.matchState + " Player Details")
         .subtitle("Click to update information")
         // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
         // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
@@ -366,13 +390,13 @@ bot.dialog('playerAndGameDetails', function (session) {
             builder.CardAction.imBack(session, "Update Club", "Club: " + session.userData.playerClub )
         ]),
         new builder.HeroCard(session)
-            .title("Game Details")
+            .title(session.userData.matchState + " Game Details")
             .subtitle("Click to update information")
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
                 builder.CardAction.imBack(session, "Kick Off", "Kick Off"),
-                builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" ),
+                // builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" ),
                 builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.conversationData.opponentTeam ),
                 builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.conversationData.opponentClub ),
                 builder.CardAction.imBack(session, "Update Game Location", "Game Location: " + session.conversationData.gameLocation ),
@@ -384,8 +408,8 @@ bot.dialog('playerAndGameDetails', function (session) {
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
-                builder.CardAction.imBack(session, "Delete Game Data", "Delete Game Data" ),
-                builder.CardAction.imBack(session, "Delete Player Data", "Delete Player Data" )
+                builder.CardAction.imBack(session, "Delete Game Data", "Track New Game" ),
+                builder.CardAction.imBack(session, "Delete Player Data", "Track New Player" )
             ])
 
     ]);
@@ -393,13 +417,13 @@ bot.dialog('playerAndGameDetails', function (session) {
     session.endDialog(); //should never get called
 });
 
-// Dialog to ask for player name 
+// Dialog to display current stats and allow input of new stats 
 bot.dialog('inGameTracking', function (session) {
     var msg = new builder.Message(session);
     msg.attachmentLayout(builder.AttachmentLayout.carousel)
     msg.attachments([
         new builder.HeroCard(session)
-            .title("Tracking Player #%s", session.userData.playerNumber )
+            .title(session.userData.matchState + " Tracking Player #%s", session.userData.playerNumber )
             .subtitle("Click to log activity")
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
@@ -413,7 +437,7 @@ bot.dialog('inGameTracking', function (session) {
 
             ]),
             new builder.HeroCard(session)
-            .title("Tracking Player #%s", session.userData.playerNumber )
+            .title(session.userData.matchState + " Tracking Player #%s", session.userData.playerNumber )
             .subtitle("Click to log activity")
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
@@ -426,7 +450,7 @@ bot.dialog('inGameTracking', function (session) {
                 builder.CardAction.imBack(session, "Substituted Out", "Substituted Out "+ session.conversationData.susbstitutedOutCount)
             ]),
             new builder.HeroCard(session)
-            .title("Tracking Player #%s", session.userData.playerNumber )
+            .title(session.userData.matchState + " Tracking Player #%s", session.userData.playerNumber )
             .subtitle("Click to log activity")
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
@@ -601,9 +625,27 @@ bot.dialog('committedFoulButtonClick', [
 
 // Add dialog to handle button click
 bot.dialog('kickOffButtonClick', [
-    function (session) {
+    function (session,args,next) {
         session.conversationData.kickOffCount ++;
-        logResponse (session, session.userData.playerNumber, 'Kick Off');
+        if (session.userData.playerNumber == null || session.userData.playerNumber == undefined)
+            {session.beginDialog('askForPlayerNumber')}
+        else {next()}
+    },
+    function (session,args,next) {
+        if (session.userData.matchState == 'Pre-Game') 
+            {
+                logResponse (session, session.userData.playerNumber, 'Kick Off 1st Half');
+                session.userData.matchState = '1st Half';
+                console.log('Match State Changed >>>>' + session.userData.matchState);
+                // session.beginDialog('inGameTracking');
+            }
+        if (session.userData.matchState == 'Half Time') 
+            {
+                logResponse (session, session.userData.playerNumber, 'Kick Off 2nd Half');
+                session.userData.matchState = '2nd Half';
+                console.log('Match State Changed >>>>' + session.userData.matchState);
+                // session.beginDialog('inGameTracking');
+            }
         session.beginDialog('inGameTracking').endDialog();
     }
 ]).triggerAction({ matches: /kick off/i });
@@ -612,8 +654,22 @@ bot.dialog('kickOffButtonClick', [
 bot.dialog('finalWhistleButtonClick', [
     function (session) {
         session.conversationData.finalWhistleCount ++;
-        logResponse (session, session.userData.playerNumber, 'Final Whistle');
-        session.beginDialog('inGameTracking').endDialog();
+        if (session.userData.matchState == '1st Half') 
+            {
+                logResponse (session, session.userData.playerNumber, 'Final Whistle 1st Half');
+                session.userData.matchState = 'Half Time';
+                console.log('Match State Changed >>>>' + session.userData.matchState);
+                session.beginDialog('playerAndGameDetails');
+            }
+            if (session.userData.matchState == '2nd Half') 
+                {
+                    logResponse (session, session.userData.playerNumber, 'Final Whistle 2nd Half');
+                    session.userData.matchState = 'Full Time';
+                    console.log('Match State Changed >>>>' + session.userData.matchState);
+                    session.beginDialog('playerAndGameDetails');
+                }
+        session.endDialog();
+
     }
 ]).triggerAction({ matches: /final whistle/i });
 
