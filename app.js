@@ -162,9 +162,7 @@ function initializeTrackingData(session) {
 
 function initializeGameData(session) {
     var date = new Date();
-    var localDate = date.toLocaleString();
-    // session.userData.gameId = localDate.toISOString(),
-    session.userData.gameId = localDate,
+    session.userData.gameId = date,
     console.log('Game Id set >>>>' + session.userData.gameId);
     session.userData.matchState = 'Pre-Game';
     console.log('Match State Changed >>>>' + session.userData.matchState);
