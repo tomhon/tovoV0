@@ -696,16 +696,16 @@ bot.dialog('finalWhistleButtonClick', [
                 logResponse (session, session.userData.playerNumber, 'Final Whistle 1st Half');
                 session.userData.matchState = 'Half Time';
                 console.log('Match State Changed >>>>' + session.userData.matchState);
-                session.beginDialog('playerAndGameDetails');
+                // session.beginDialog('playerAndGameDetails');
             }
             if (session.userData.matchState == '2nd Half') 
                 {
                     logResponse (session, session.userData.playerNumber, 'Final Whistle 2nd Half');
                     session.userData.matchState = 'Full Time';
                     console.log('Match State Changed >>>>' + session.userData.matchState);
-                    session.beginDialog('playerAndGameDetails');
+                    // session.beginDialog('playerAndGameDetails');
                 }
-        session.endDialog();
+        session.beginDialog('playerAndGameDetails').endDialog();
 
     }
 ]).triggerAction({ matches: /final whistle/i });
