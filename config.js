@@ -8,7 +8,8 @@ config.database = {
 };
 
 config.collection = {
-    "id": "G04Copa2017"
+    // "id": "G04Copa2017"
+    "id": "V2 Data Structure"
 };
 
 config.documents = {

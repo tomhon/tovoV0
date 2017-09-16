@@ -96,10 +96,10 @@ function getDBDocument(document) {
     });
 };
 
-function pushLogData (document) {
-    logDataArray.push(document);
-    console.log('log pushed to array')
-}
+// function pushLogData (document) {
+//     logDataArray.push(document);
+//     console.log('log pushed to array')
+// }
 
 
 
@@ -108,13 +108,12 @@ function logData () {
     // id is the timestamp
     var date = new Date();
     this.id = date.toISOString(),
-    this.gameId = 'Not Configured'
+    this.gameId = 'Not Configured',
     this.user = 'Admin',
-    this.player = 'Bot Initialized',
-    this.status = 'Successfully'
+    this.status = 'Bot Initialized'
 };
 
-var logDataArray = Array();
+// var logDataArray = Array();
 
 var numberPromptOptions = { 
                 maxRetries: 3, minValue: 1, maxValue: 10, retryPrompt: 'Not a valid option'};
@@ -123,40 +122,45 @@ var textPromptOptions = {
                 maxRetries: 3, retryPrompt: 'Not a valid option'};
 
 function logResponse (session, player, status) {
-        oLogData = new logData();
-        oLogData.user = session.message.user.name;
-        oLogData.gameId = session.userData.gameId;
-        oLogData.player = player;
-        oLogData.status = status;
+        // oLogData = new logData();
+        // oLogData.user = session.message.user.name;
+        // oLogData.gameId = session.userData.gameId;
+        // oLogData.userData = session.userData;
+        // // oLogData.conversationData = session.userData;
+        var date = new Date();
+        session.userData.id = date.toISOString();
+        session.userData.status = status;
+        session.userData.user = session.message.user.name;
         console.log('attempting write to docdb');
-        getDBDocument(oLogData)
-            .then(()  =>   console.log(oLogData))
+        getDBDocument(session.userData)
+            .then(()  =>   console.log(session.userData))
             .catch((error) => { console.log(`Completed with error ${JSON.stringify(error)}`) });
 
 
 }
 
-function initializeTrackingData(session) {
-    session.conversationData.completedPassCount = 0;
-    session.conversationData.attemptedPassCount = 0;
-    session.conversationData.successfulDribbleCount = 0;
-    session.conversationData.attemptedDribbleCount = 0;
-    session.conversationData.successfulTackleCount = 0;
-    session.conversationData.attemptedTackleCount = 0;
-    session.conversationData.shotCount = 0;
-    session.conversationData.goalCount = 0;
-    session.conversationData.inSpaceCount = 0;
-    session.conversationData.scanningCount = 0;
-    session.conversationData.substitutedInCount = 0;
-    session.conversationData.susbstitutedOutCount = 0;
-    session.conversationData.cornerCount = 0;
-    session.conversationData.freeKickCount = 0;
-    session.conversationData.penaltyKickCount = 0;
-    session.conversationData.fouledCount = 0;
-    session.conversationData.committedFoulCount = 0;
-    session.conversationData.kickOffCount = 0;
-    session.conversationData.finalWhistleCount = 0;
-    session.conversationData.assistCount = 0;
+
+function initializePlayerTrackingData(session) {
+    session.userData.completedPassCount = 0;
+    session.userData.attemptedPassCount = 0;
+    session.userData.successfulDribbleCount = 0;
+    session.userData.attemptedDribbleCount = 0;
+    session.userData.successfulTackleCount = 0;
+    session.userData.attemptedTackleCount = 0;
+    session.userData.shotCount = 0;
+    session.userData.goalCount = 0;
+    session.userData.inSpaceCount = 0;
+    session.userData.scanningCount = 0;
+    session.userData.substitutedInCount = 0;
+    session.userData.susbstitutedOutCount = 0;
+    session.userData.cornerCount = 0;
+    session.userData.freeKickCount = 0;
+    session.userData.penaltyKickCount = 0;
+    session.userData.fouledCount = 0;
+    session.userData.committedFoulCount = 0;
+    session.userData.kickOffCount = 0;
+    session.userData.finalWhistleCount = 0;
+    session.userData.assistCount = 0;
     console.log('Tracking Data Initialized');
 };
 
@@ -166,11 +170,11 @@ function initializeGameData(session) {
     console.log('Game Id set >>>>' + session.userData.gameId);
     session.userData.matchState = 'Pre-Game';
     console.log('Match State Changed >>>>' + session.userData.matchState);
-    session.conversationData.playerTeamHomeAway = 'Home'; 
-    session.conversationData.opponentTeam = null;
-    session.conversationData.opponentClub = null;
-    session.conversationData.gameLocation = null;
-    session.conversationData.gameField = null;
+    session.userData.playerTeamHomeAway = 'Home'; 
+    session.userData.opponentTeam = null;
+    session.userData.opponentClub = null;
+    session.userData.gameLocation = null;
+    session.userData.gameField = null;
 }
 
 // Create chat connector for communicating with the Bot Framework Service
@@ -199,7 +203,7 @@ var bot = new builder.UniversalBot(connector, [
         };
         if (session.userData.matchState == 'Pre-Game') {
 //set up tracking data structure - using conversationData which persists across the conversation
-            initializeTrackingData(session);
+            initializePlayerTrackingData(session);
         };
         next();
     },
@@ -275,7 +279,7 @@ bot.dialog('deletePlayerData', [
         session.userData.playerNumber = null;
         session.userData.playerTeam = null;
         session.userData.playerClub = null;
-        initializeTrackingData(session);
+        initializePlayerTrackingData(session);
         session.send('Player Data Details Deleted');
         session.beginDialog('playerAndGameDetails').endDialog()
     }
@@ -311,7 +315,7 @@ bot.dialog('askForOpponentTeam', [
         builder.Prompts.text(session, "Please provide the opponent's team name");
     },
     function (session, results) {
-        session.conversationData.opponentTeam = results.response;
+        session.userData.opponentTeam = results.response;
         session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update opponent team/i });
@@ -322,7 +326,7 @@ bot.dialog('askForOpponentClub', [
         builder.Prompts.text(session, "Please provide the opponent's club name");
     },
     function (session, results) {
-        session.conversationData.opponentClub = results.response;
+        session.userData.opponentClub = results.response;
         session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update opponent club/i });
@@ -334,7 +338,7 @@ bot.dialog('askForGameLocation', [
         builder.Prompts.text(session, "Please provide the game location");
     },
     function (session, results) {
-        session.conversationData.gameLocation = results.response;
+        session.userData.gameLocation = results.response;
         session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update game location/i });
@@ -345,7 +349,7 @@ bot.dialog('askForGameField', [
         builder.Prompts.text(session, "Please provide the field number");
     },
     function (session, results) {
-        session.conversationData.gameField = results.response;
+        session.userData.gameField = results.response;
         session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /update game field/i });
@@ -354,7 +358,7 @@ bot.dialog('askForGameField', [
 bot.dialog('deleteGameData', [
     function (session) {
         initializeGameData(session)
-        initializeTrackingData(session);
+        initializePlayerTrackingData(session);
         session.send('Game Data Details Deleted');
         session.beginDialog('playerAndGameDetails').endDialog()
     }
@@ -372,10 +376,10 @@ bot.dialog('gameDetails', function (session) {
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
-                builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.conversationData.opponentTeam ),
-                builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.conversationData.opponentClub ),
-                builder.CardAction.imBack(session, "Update Game Location", "Game Location: " + session.conversationData.gameLocation ),
-                builder.CardAction.imBack(session, "Update Game Field", "Field Number: " + session.conversationData.gameField ),
+                builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.userData.opponentTeam ),
+                builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.userData.opponentClub ),
+                builder.CardAction.imBack(session, "Update Game Location", "Game Location: " + session.userData.gameLocation ),
+                builder.CardAction.imBack(session, "Update Game Field", "Field Number: " + session.userData.gameField ),
                 builder.CardAction.imBack(session, "Delete Game Data", "Delete Game Data" ),
             ])
 
@@ -408,11 +412,11 @@ bot.dialog('playerAndGameDetails', function (session) {
             .buttons([
                 builder.CardAction.imBack(session, "Kick Off", "Kick Off"),
                 // builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" ),
-                builder.CardAction.imBack(session, "Update Home Team", session.userData.playerClub + ": " + session.conversationData.playerTeamHomeAway ),
-                builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.conversationData.opponentTeam ),
-                builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.conversationData.opponentClub ),
-                builder.CardAction.imBack(session, "Update Game Location", "Game Location: " + session.conversationData.gameLocation ),
-                builder.CardAction.imBack(session, "Update Game Field", "Field Number: " + session.conversationData.gameField )
+                builder.CardAction.imBack(session, "Update Home Team", session.userData.playerClub + ": " + session.userData.playerTeamHomeAway ),
+                builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.userData.opponentTeam ),
+                builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.userData.opponentClub ),
+                builder.CardAction.imBack(session, "Update Game Location", "Game Location: " + session.userData.gameLocation ),
+                builder.CardAction.imBack(session, "Update Game Field", "Field Number: " + session.userData.gameField )
             ]),
             new builder.HeroCard(session)
             .title("Maintenance")
@@ -440,12 +444,12 @@ bot.dialog('inGameTracking', function (session) {
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
-                builder.CardAction.imBack(session, "Completed Pass", "Completed Pass " + session.conversationData.completedPassCount),
-                builder.CardAction.imBack(session, "Attempted Pass", "Attempted Pass " + session.conversationData.attemptedPassCount),
-                builder.CardAction.imBack(session, "Successful Dribble", "Successful Dribble "+ session.conversationData.successfulDribbleCount),
-                builder.CardAction.imBack(session, "Attempted Dribble", "Attempted Dribble "+ session.conversationData.attemptedDribbleCount),
-                builder.CardAction.imBack(session, "Successful Tackle", "Successful Tackle "+ session.conversationData.successfulTackleCount),
-                builder.CardAction.imBack(session, "Attempted Tackle", "Attempted Tackle "+ session.conversationData.attemptedTackleCount),
+                builder.CardAction.imBack(session, "Completed Pass", "Completed Pass " + session.userData.completedPassCount),
+                builder.CardAction.imBack(session, "Attempted Pass", "Attempted Pass " + session.userData.attemptedPassCount),
+                builder.CardAction.imBack(session, "Successful Dribble", "Successful Dribble "+ session.userData.successfulDribbleCount),
+                builder.CardAction.imBack(session, "Attempted Dribble", "Attempted Dribble "+ session.userData.attemptedDribbleCount),
+                builder.CardAction.imBack(session, "Successful Tackle", "Successful Tackle "+ session.userData.successfulTackleCount),
+                builder.CardAction.imBack(session, "Attempted Tackle", "Attempted Tackle "+ session.userData.attemptedTackleCount),
 
             ]),
             new builder.HeroCard(session)
@@ -454,12 +458,12 @@ bot.dialog('inGameTracking', function (session) {
             // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
-                builder.CardAction.imBack(session, "Shot", "Shot "+ session.conversationData.shotCount),
-                builder.CardAction.imBack(session, "Goal", "Goal "+ session.conversationData.goalCount),
-                builder.CardAction.imBack(session, "Assist", "Assist "+ session.conversationData.assistCount),
-                builder.CardAction.imBack(session, "Corner", "Corner "+ session.conversationData.cornerCount),
-                builder.CardAction.imBack(session, "Free Kick", "Free Kick "+ session.conversationData.freeKickCount),
-                builder.CardAction.imBack(session, "Penalty Kick", "Penalty Kick "+ session.conversationData.penaltyKickCount)
+                builder.CardAction.imBack(session, "Shot", "Shot "+ session.userData.shotCount),
+                builder.CardAction.imBack(session, "Goal", "Goal "+ session.userData.goalCount),
+                builder.CardAction.imBack(session, "Assist", "Assist "+ session.userData.assistCount),
+                builder.CardAction.imBack(session, "Corner", "Corner "+ session.userData.cornerCount),
+                builder.CardAction.imBack(session, "Free Kick", "Free Kick "+ session.userData.freeKickCount),
+                builder.CardAction.imBack(session, "Penalty Kick", "Penalty Kick "+ session.userData.penaltyKickCount)
             ]),
             new builder.HeroCard(session)
             .title(session.userData.matchState + " Tracking Player #%s", session.userData.playerNumber )
@@ -468,11 +472,11 @@ bot.dialog('inGameTracking', function (session) {
             // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
 
-                builder.CardAction.imBack(session, "Scanning", "Scanning "+ session.conversationData.scanningCount),
-                builder.CardAction.imBack(session, "Substituted In", "Substituted In "+ session.conversationData.substitutedInCount),
-                builder.CardAction.imBack(session, "Substituted Out", "Substituted Out "+ session.conversationData.susbstitutedOutCount),
-                builder.CardAction.imBack(session, "Fouled", "Fouled "+ session.conversationData.fouledCount),
-                builder.CardAction.imBack(session, "Committed Foul", "Committed Foul "+ session.conversationData.committedFoulCount),
+                builder.CardAction.imBack(session, "Scanning", "Scanning "+ session.userData.scanningCount),
+                builder.CardAction.imBack(session, "Substituted In", "Substituted In "+ session.userData.substitutedInCount),
+                builder.CardAction.imBack(session, "Substituted Out", "Substituted Out "+ session.userData.susbstitutedOutCount),
+                builder.CardAction.imBack(session, "Fouled", "Fouled "+ session.userData.fouledCount),
+                builder.CardAction.imBack(session, "Committed Foul", "Committed Foul "+ session.userData.committedFoulCount),
                 builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" )
             ])
 
@@ -489,7 +493,7 @@ bot.dialog('askForHomeTeam', [
         builder.Prompts.choice(session, "Is "+ session.userData.playerName+"'s team Home or Away?", "Home|Away");
     },
     function (session, results) {
-        session.conversationData.playerTeamHomeAway = results.response.entity;
+        session.userData.playerTeamHomeAway = results.response.entity;
         session.beginDialog('playerAndGameDetails').endDialog();
     }
 ]).triggerAction({ matches: /Update Home Team/i });
@@ -497,7 +501,7 @@ bot.dialog('askForHomeTeam', [
 // Add dialog to handle button click
 bot.dialog('assistButtonClick', [
     function (session) {
-        session.conversationData.assistCount ++;
+        session.userData.assistCount ++;
         logResponse (session, session.userData.playerNumber, 'Assist');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -506,7 +510,7 @@ bot.dialog('assistButtonClick', [
 // Add dialog to handle button click
 bot.dialog('attemptedPassButtonClick', [
     function (session) {
-        session.conversationData.attemptedPassCount ++;
+        session.userData.attemptedPassCount ++;
         logResponse (session, session.userData.playerNumber, 'Attempted Pass');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -515,8 +519,8 @@ bot.dialog('attemptedPassButtonClick', [
 // Add dialog to handle button click
 bot.dialog('completedPassButtonClick', [
     function (session) {
-        session.conversationData.completedPassCount ++;
-        session.conversationData.attemptedPassCount ++;
+        session.userData.completedPassCount ++;
+        session.userData.attemptedPassCount ++;
         logResponse (session, session.userData.playerNumber, 'Completed Pass');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -525,8 +529,8 @@ bot.dialog('completedPassButtonClick', [
 // Add dialog to handle button click
 bot.dialog('successfulDribbleButtonClick', [
     function (session) {
-        session.conversationData.successfulDribbleCount ++;
-        session.conversationData.attemptedDribbleCount ++;
+        session.userData.successfulDribbleCount ++;
+        session.userData.attemptedDribbleCount ++;
         logResponse (session, session.userData.playerNumber, 'Successful Dribble');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -535,7 +539,7 @@ bot.dialog('successfulDribbleButtonClick', [
 // Add dialog to handle button click
 bot.dialog('attemptedDribbleButtonClick', [
     function (session) {
-        session.conversationData.attemptedDribbleCount ++;
+        session.userData.attemptedDribbleCount ++;
         logResponse (session, session.userData.playerNumber, 'Attempted Dribble');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -544,7 +548,7 @@ bot.dialog('attemptedDribbleButtonClick', [
 // Add dialog to handle button click
 bot.dialog('attemptedTackleButtonClick', [
     function (session) {
-        session.conversationData.attemptedTackleCount ++;
+        session.userData.attemptedTackleCount ++;
         logResponse (session, session.userData.playerNumber, 'Attempted Tackle');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -553,8 +557,8 @@ bot.dialog('attemptedTackleButtonClick', [
 // Add dialog to handle button click
 bot.dialog('successfulTackleButtonClick', [
     function (session) {
-        session.conversationData.successfulTackleCount ++;
-        session.conversationData.attemptedTackleCount ++;
+        session.userData.successfulTackleCount ++;
+        session.userData.attemptedTackleCount ++;
         logResponse (session, session.userData.playerNumber, 'Successful Tackle');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -563,7 +567,7 @@ bot.dialog('successfulTackleButtonClick', [
 // Add dialog to handle button click
 bot.dialog('shotButtonClick', [
     function (session) {
-        session.conversationData.shotCount ++;
+        session.userData.shotCount ++;
         logResponse (session, session.userData.playerNumber, 'Shot');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -572,8 +576,8 @@ bot.dialog('shotButtonClick', [
 // Add dialog to handle button click
 bot.dialog('goalButtonClick', [
     function (session) {
-        session.conversationData.goalCount ++;
-        session.conversationData.shotCount ++;
+        session.userData.goalCount ++;
+        session.userData.shotCount ++;
         logResponse (session, session.userData.playerNumber, 'Goal');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -582,7 +586,7 @@ bot.dialog('goalButtonClick', [
 // Add dialog to handle button click
 bot.dialog('inSpaceButtonClick', [
     function (session) {
-        session.conversationData.inSpaceCount ++;
+        session.userData.inSpaceCount ++;
         logResponse (session, session.userData.playerNumber, 'In Space');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -591,7 +595,7 @@ bot.dialog('inSpaceButtonClick', [
 // Add dialog to handle button click
 bot.dialog('scanningButtonClick', [
     function (session) {
-        session.conversationData.scanningCount ++;
+        session.userData.scanningCount ++;
         logResponse (session, session.userData.playerNumber, 'Scanning');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -600,7 +604,7 @@ bot.dialog('scanningButtonClick', [
 // Add dialog to handle button click
 bot.dialog('substitutedInButtonClick', [
     function (session) {
-        session.conversationData.substitutedInCount ++;
+        session.userData.substitutedInCount ++;
         logResponse (session, session.userData.playerNumber, 'Substituted In');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -609,7 +613,7 @@ bot.dialog('substitutedInButtonClick', [
 // Add dialog to handle button click
 bot.dialog('substitutedOutButtonClick', [
     function (session) {
-        session.conversationData.susbstitutedOutCount ++;
+        session.userData.susbstitutedOutCount ++;
         logResponse (session, session.userData.playerNumber, 'Substituted Out');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -618,7 +622,7 @@ bot.dialog('substitutedOutButtonClick', [
 // Add dialog to handle button click
 bot.dialog('cornerButtonClick', [
     function (session) {
-        session.conversationData.cornerCount ++;
+        session.userData.cornerCount ++;
         logResponse (session, session.userData.playerNumber, 'Corner');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -627,7 +631,7 @@ bot.dialog('cornerButtonClick', [
 // Add dialog to handle button click
 bot.dialog('freeKickButtonClick', [
     function (session) {
-        session.conversationData.freeKickCount ++;
+        session.userData.freeKickCount ++;
         logResponse (session, session.userData.playerNumber, 'Free Kick');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -636,7 +640,7 @@ bot.dialog('freeKickButtonClick', [
 // Add dialog to handle button click
 bot.dialog('penaltyKickButtonClick', [
     function (session) {
-        session.conversationData.penaltyKickCount ++;
+        session.userData.penaltyKickCount ++;
         logResponse (session, session.userData.playerNumber, 'Penalty');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -645,7 +649,7 @@ bot.dialog('penaltyKickButtonClick', [
 // Add dialog to handle button click
 bot.dialog('fouledButtonClick', [
     function (session) {
-        session.conversationData.fouledCount ++;
+        session.userData.fouledCount ++;
         logResponse (session, session.userData.playerNumber, 'Fouled');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -654,7 +658,7 @@ bot.dialog('fouledButtonClick', [
 // Add dialog to handle button click
 bot.dialog('committedFoulButtonClick', [
     function (session) {
-        session.conversationData.committedFoulCount ++;
+        session.userData.committedFoulCount ++;
         logResponse (session, session.userData.playerNumber, 'Committed Foul');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -663,7 +667,7 @@ bot.dialog('committedFoulButtonClick', [
 // Add dialog to handle button click
 bot.dialog('kickOffButtonClick', [
     function (session,args,next) {
-        session.conversationData.kickOffCount ++;
+        session.userData.kickOffCount ++;
         if (session.userData.playerNumber == null || session.userData.playerNumber == undefined)
             {session.beginDialog('askForPlayerNumber')}
         else {next()}
@@ -690,7 +694,7 @@ bot.dialog('kickOffButtonClick', [
 // Add dialog to handle button click
 bot.dialog('finalWhistleButtonClick', [
     function (session) {
-        session.conversationData.finalWhistleCount ++;
+        session.userData.finalWhistleCount ++;
         if (session.userData.matchState == '1st Half') 
             {
                 logResponse (session, session.userData.playerNumber, 'Final Whistle 1st Half');
