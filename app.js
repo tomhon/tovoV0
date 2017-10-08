@@ -12,6 +12,8 @@ var HttpStatusCodes = { NOTFOUND: 404 };
 var databaseUrl = `dbs/${config.database.id}`;
 var collectionUrl = `${databaseUrl}/colls/${config.collection.id}`;
 
+var moment = require('moment');
+moment().format('hh:mm:ss')
 
 
 
@@ -161,6 +163,7 @@ function initializePlayerTrackingData(session) {
     session.userData.kickOffCount = 0;
     session.userData.finalWhistleCount = 0;
     session.userData.assistCount = 0;
+
     console.log('Tracking Data Initialized');
 };
 
@@ -175,7 +178,53 @@ function initializeGameData(session) {
     session.userData.opponentClub = null;
     session.userData.gameLocation = null;
     session.userData.gameField = null;
+    session.userData.totalElapsedTime = 0;
 }
+
+function updateElapsedTime(session, event) {
+    var date = new Date();
+    console.log('updateElapsedTime called' + event + date.toISOString());
+    switch (event) {
+        case 'Kick Off 1st Half': {
+            session.userData.playerInOut = 'In Assumed';
+            session.userData.mostRecentStartTime = date.getTime();
+            };
+            break;
+        case 'Kick Off 2nd Half': {
+            //assume playerInOut doesn't change at half time
+            session.userData.mostRecentStartTime = date.getTime();
+            };
+            break;
+        case 'Final Whistle': {
+            //assume playerInOut doesn't change at half time or full time
+            if (session.userData.playerInOut == 'In' || session.userData.playerInOut == 'In Assumed') {
+                var date = new Date();
+                var currentElapsedTime = date.getTime() - session.userData.mostRecentStartTime;
+                session.userData.totalElapsedTime = session.userData.totalElapsedTime + currentElapsedTime;
+
+            }
+
+            };
+            break;
+        case 'Substituted In': {
+            session.userData.playerInOut = 'In';
+            session.userData.mostRecentStartTime = date.getTime();
+            };
+            break;
+        case 'Substituted Out': {
+            session.userData.playerInOut = 'Out';
+            var date = new Date();
+            var currentElapsedTime = date.getTime() - session.userData.mostRecentStartTime;
+            session.userData.totalElapsedTime = session.userData.totalElapsedTime + currentElapsedTime;
+            };
+            break;
+        default: {console.log('Default Case')}
+
+    }
+
+
+}
+
 
 // Create chat connector for communicating with the Bot Framework Service
 var connector = new builder.ChatConnector({
@@ -605,6 +654,7 @@ bot.dialog('scanningButtonClick', [
 bot.dialog('substitutedInButtonClick', [
     function (session) {
         session.userData.substitutedInCount ++;
+        updateElapsedTime(session,'Substituted In');
         logResponse (session, session.userData.playerNumber, 'Substituted In');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -614,6 +664,7 @@ bot.dialog('substitutedInButtonClick', [
 bot.dialog('substitutedOutButtonClick', [
     function (session) {
         session.userData.susbstitutedOutCount ++;
+        updateElapsedTime(session,'Substituted Out');
         logResponse (session, session.userData.playerNumber, 'Substituted Out');
         session.beginDialog('inGameTracking').endDialog();
     }
@@ -668,6 +719,7 @@ bot.dialog('committedFoulButtonClick', [
 bot.dialog('kickOffButtonClick', [
     function (session,args,next) {
         session.userData.kickOffCount ++;
+
         if (session.userData.playerNumber == null || session.userData.playerNumber == undefined)
             {session.beginDialog('askForPlayerNumber')}
         else {next()}
@@ -675,6 +727,7 @@ bot.dialog('kickOffButtonClick', [
     function (session,args,next) {
         if (session.userData.matchState == 'Pre-Game') 
             {
+                updateElapsedTime(session,'Kick Off 1st Half');
                 logResponse (session, session.userData.playerNumber, 'Kick Off 1st Half');
                 session.userData.matchState = '1st Half';
                 console.log('Match State Changed >>>>' + session.userData.matchState);
@@ -682,6 +735,7 @@ bot.dialog('kickOffButtonClick', [
             }
         if (session.userData.matchState == 'Half Time') 
             {
+                updateElapsedTime(session,'Kick Off 2nd Half');
                 logResponse (session, session.userData.playerNumber, 'Kick Off 2nd Half');
                 session.userData.matchState = '2nd Half';
                 console.log('Match State Changed >>>>' + session.userData.matchState);
@@ -695,6 +749,7 @@ bot.dialog('kickOffButtonClick', [
 bot.dialog('finalWhistleButtonClick', [
     function (session) {
         session.userData.finalWhistleCount ++;
+        updateElapsedTime(session,'Final Whistle');
         if (session.userData.matchState == '1st Half') 
             {
                 logResponse (session, session.userData.playerNumber, 'Final Whistle 1st Half');
