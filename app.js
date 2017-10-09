@@ -451,13 +451,14 @@ bot.dialog('playerAndGameDetails', function (session) {
             builder.CardAction.imBack(session, "Update Player Name", "Name: " + session.userData.playerName ),
             builder.CardAction.imBack(session, "Update Player Number", "Number: " + session.userData.playerNumber ),
             builder.CardAction.imBack(session, "Update Team", "Team: " + session.userData.playerTeam ),
-            builder.CardAction.imBack(session, "Update Club", "Club: " + session.userData.playerClub )
+            builder.CardAction.imBack(session, "Update Club", "Club: " + session.userData.playerClub ),
+            builder.CardAction.imBack(session, "", "Player Time in Game: " + moment(session.userData.totalElapsedTime).format('mm:ss') + ' mm:ss' )
+
         ]),
         new builder.HeroCard(session)
             .title(session.userData.matchState + " Game Details")
             .subtitle("Click to update information")
-            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
-            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+
             .buttons([
                 builder.CardAction.imBack(session, "Kick Off", "Kick Off"),
                 // builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" ),
