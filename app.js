@@ -452,7 +452,7 @@ bot.dialog('playerAndGameDetails', function (session) {
             builder.CardAction.imBack(session, "Update Player Number", "Number: " + session.userData.playerNumber ),
             builder.CardAction.imBack(session, "Update Team", "Team: " + session.userData.playerTeam ),
             builder.CardAction.imBack(session, "Update Club", "Club: " + session.userData.playerClub ),
-            builder.CardAction.imBack(session, "", "Player Time in Game: " + moment(session.userData.totalElapsedTime).format('mm:ss') + ' mm:ss' )
+            builder.CardAction.imBack(session, "Player In", "Player In: " + moment(session.userData.totalElapsedTime).format('mm:ss') )
 
         ]),
         new builder.HeroCard(session)
