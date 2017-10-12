@@ -115,8 +115,6 @@ function logData () {
     this.status = 'Bot Initialized'
 };
 
-// var logDataArray = Array();
-
 var numberPromptOptions = { 
                 maxRetries: 3, minValue: 1, maxValue: 10, retryPrompt: 'Not a valid option'};
 
@@ -124,25 +122,31 @@ var textPromptOptions = {
                 maxRetries: 3, retryPrompt: 'Not a valid option'};
 
 function logResponse (session, player, status) {
-        // oLogData = new logData();
-        // oLogData.user = session.message.user.name;
-        // oLogData.gameId = session.userData.gameId;
-        // oLogData.userData = session.userData;
-        // // oLogData.conversationData = session.userData;
-        var date = new Date();
-        session.userData.id = date.toISOString();
-        session.userData.status = status;
-        session.userData.user = session.message.user.name;
-        console.log('attempting write to docdb');
-        getDBDocument(session.userData)
-            .then(()  =>   console.log(session.userData))
-            .catch((error) => { console.log(`Completed with error ${JSON.stringify(error)}`) });
+    var date = new Date();
+    session.userData.id = date.toISOString();
+    session.userData.status = status;
+    session.userData.user = session.message.user.name;
+    console.log('attempting write to docdb');
+    getDBDocument(session.userData)
+        .then(()  =>   console.log(session.userData))
+        .catch((error) => { console.log(`Completed with error ${JSON.stringify(error)}`) });
 
 
 }
 
-
+//Deletes all game data and initializes tracking variables
 function initializePlayerTrackingData(session) {
+    var date = new Date();
+    session.userData.gameId = date,
+    console.log('Game Id set >>>>' + session.userData.gameId);
+    session.userData.matchState = 'Pre-Game';
+    console.log('Match State Changed >>>>' + session.userData.matchState);
+    session.userData.playerTeamHomeAway = 'Home'; 
+    session.userData.opponentTeam = '<Enter>';
+    session.userData.opponentClub = '<Enter>';
+    session.userData.gameLocation = '<Enter>';
+    session.userData.gameField = '<Enter>';
+    session.userData.totalElapsedTime = 0;
     session.userData.completedPassCount = 0;
     session.userData.attemptedPassCount = 0;
     session.userData.successfulDribbleCount = 0;
@@ -163,23 +167,22 @@ function initializePlayerTrackingData(session) {
     session.userData.kickOffCount = 0;
     session.userData.finalWhistleCount = 0;
     session.userData.assistCount = 0;
-
     console.log('Tracking Data Initialized');
 };
-
-function initializeGameData(session) {
-    var date = new Date();
-    session.userData.gameId = date,
-    console.log('Game Id set >>>>' + session.userData.gameId);
-    session.userData.matchState = 'Pre-Game';
-    console.log('Match State Changed >>>>' + session.userData.matchState);
-    session.userData.playerTeamHomeAway = 'Home'; 
-    session.userData.opponentTeam = null;
-    session.userData.opponentClub = null;
-    session.userData.gameLocation = null;
-    session.userData.gameField = null;
-    session.userData.totalElapsedTime = 0;
-}
+// //Deletes all Game Data and initializes tracking variables
+// function initializeGameData(session) {
+//     var date = new Date();
+//     session.userData.gameId = date,
+//     console.log('Game Id set >>>>' + session.userData.gameId);
+//     session.userData.matchState = 'Pre-Game';
+//     console.log('Match State Changed >>>>' + session.userData.matchState);
+//     session.userData.playerTeamHomeAway = 'Home'; 
+//     session.userData.opponentTeam = null;
+//     session.userData.opponentClub = null;
+//     session.userData.gameLocation = null;
+//     session.userData.gameField = null;
+//     session.userData.totalElapsedTime = 0;
+// }
 
 function updateElapsedTime(session, event) {
     var date = new Date();
@@ -201,9 +204,7 @@ function updateElapsedTime(session, event) {
                 var date = new Date();
                 var currentElapsedTime = date.getTime() - session.userData.mostRecentStartTime;
                 session.userData.totalElapsedTime = session.userData.totalElapsedTime + currentElapsedTime;
-
-            }
-
+                }
             };
             break;
         case 'Substituted In': {
@@ -241,30 +242,26 @@ var savedAddress;
 // Receive messages from the user and respond by echoing each message back (prefixed with 'You said:')
 var bot = new builder.UniversalBot(connector, [
     function (session, args, next) {
-        console.log('Match State >>>>' + session.userData.matchState);
         session.send("Welcome to the Player Tracker. I'm here to help gather stats on your player's performance");
-        session.send("Enter details of your player and the game, then you're all set to hit 'Kick Off'");
-
 //set up match state - validate states Pre-Game, 1st Half, Half Time, 2nd Half, Full Time
         if (session.userData.matchState==undefined) {
             session.userData.matchState = 'Pre-Game';
+            initializePlayerTrackingData(session);
             console.log('Match State Changed >>>>' + session.userData.matchState);
         };
-        if (session.userData.matchState == 'Pre-Game') {
-//set up tracking data structure - using conversationData which persists across the conversation
-            initializePlayerTrackingData(session);
+        if (session.userData.matchState=='Full Time') {
+            builder.Prompts.choice(session, "Would you like to track a new game?", "Yes | No", { listStyle: builder.ListStyle.button });
         };
         next();
     },
     function (session, results, next) {
-        if (session.userData.playerName == undefined || session.userData.playerName == null ) 
-            {session.beginDialog('askForPlayerName');} 
-        else {next()}
-    },
-    function (session, results, next) {
-        if (session.userData.playerNumber == undefined || session.userData.playerNumber == null ) 
-            {session.beginDialog('askForPlayerNumber')} 
-        else {next()}
+        if (results.response != undefined) {
+            if (results.response.entity === 'Yes ') {
+                initializePlayerTrackingData(session);
+                session.send('Game Data Details Initialized');
+            };
+        };
+        next();
     },
     function (session, results, next) {
         if (session.userData.matchState == '1st Half' || session.userData.matchState == '2nd Half')
@@ -324,10 +321,10 @@ bot.dialog('askForPlayerClub', [
 // Dialog to delete player data 
 bot.dialog('deletePlayerData', [
     function (session) {
-        session.userData.playerName = null;
-        session.userData.playerNumber = null;
-        session.userData.playerTeam = null;
-        session.userData.playerClub = null;
+        session.userData.playerName = '<Enter>';
+        session.userData.playerNumber = '<Enter>';
+        session.userData.playerTeam = '<Enter>';
+        session.userData.playerClub = '<Enter>';
         initializePlayerTrackingData(session);
         session.send('Player Data Details Deleted');
         session.beginDialog('playerAndGameDetails').endDialog()
@@ -406,7 +403,7 @@ bot.dialog('askForGameField', [
 // Dialog to delete player data 
 bot.dialog('deleteGameData', [
     function (session) {
-        initializeGameData(session)
+        // initializeGameData(session)
         initializePlayerTrackingData(session);
         session.send('Game Data Details Deleted');
         session.beginDialog('playerAndGameDetails').endDialog()
