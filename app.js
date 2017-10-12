@@ -138,15 +138,15 @@ function logResponse (session, player, status) {
 function initializePlayerTrackingData(session) {
     var date = new Date();
     session.userData.gameId = date,
-    console.log('Game Id set >>>>' + session.userData.gameId);
+    console.log('New Game Id set >>>>' + session.userData.gameId);
     session.userData.matchState = 'Pre-Game';
-    console.log('Match State Changed >>>>' + session.userData.matchState);
     session.userData.playerTeamHomeAway = 'Home'; 
     session.userData.opponentTeam = '<Enter>';
     session.userData.opponentClub = '<Enter>';
     session.userData.gameLocation = '<Enter>';
     session.userData.gameField = '<Enter>';
-    session.userData.totalElapsedTime = 0;
+    session.userData.totalPlayerElapsedTime = 0;
+    session.userData.totalGameElapsedTime = 0;
     session.userData.completedPassCount = 0;
     session.userData.attemptedPassCount = 0;
     session.userData.successfulDribbleCount = 0;
@@ -167,7 +167,7 @@ function initializePlayerTrackingData(session) {
     session.userData.kickOffCount = 0;
     session.userData.finalWhistleCount = 0;
     session.userData.assistCount = 0;
-    console.log('Tracking Data Initialized');
+    console.log('Game Tracking Data Initialized');
 };
 // //Deletes all Game Data and initializes tracking variables
 // function initializeGameData(session) {
@@ -181,7 +181,7 @@ function initializePlayerTrackingData(session) {
 //     session.userData.opponentClub = null;
 //     session.userData.gameLocation = null;
 //     session.userData.gameField = null;
-//     session.userData.totalElapsedTime = 0;
+//     session.userData.totalPlayerElapsedTime = 0;
 // }
 
 function updateElapsedTime(session, event) {
@@ -190,33 +190,35 @@ function updateElapsedTime(session, event) {
     switch (event) {
         case 'Kick Off 1st Half': {
             session.userData.playerInOut = 'In Assumed';
-            session.userData.mostRecentStartTime = date.getTime();
+            session.userData.mostRecentPlayerStartTime = date.getTime();
+            session.userData.mostRecentGameStartTime = date.getTime();
             };
             break;
         case 'Kick Off 2nd Half': {
             //assume playerInOut doesn't change at half time
-            session.userData.mostRecentStartTime = date.getTime();
+            session.userData.mostRecentPlayerStartTime = date.getTime();
+            session.userData.mostRecentGameStartTime = date.getTime();
             };
             break;
         case 'Final Whistle': {
             //assume playerInOut doesn't change at half time or full time
+            var currentGameElapsedTime = date.getTime() - session.userData.mostRecentGameStartTime;
+            session.userData.totalGameElapsedTime = session.userData.totalGameElapsedTime + currentGameElapsedTime;
             if (session.userData.playerInOut == 'In' || session.userData.playerInOut == 'In Assumed') {
-                var date = new Date();
-                var currentElapsedTime = date.getTime() - session.userData.mostRecentStartTime;
-                session.userData.totalElapsedTime = session.userData.totalElapsedTime + currentElapsedTime;
+                var currentPlayerElapsedTime = date.getTime() - session.userData.mostRecentPlayerStartTime;
+                session.userData.totalPlayerElapsedTime = session.userData.totalPlayerElapsedTime + currentPlayerElapsedTime;
                 }
             };
             break;
         case 'Substituted In': {
             session.userData.playerInOut = 'In';
-            session.userData.mostRecentStartTime = date.getTime();
+            session.userData.mostRecentPlayerStartTime = date.getTime();
             };
             break;
         case 'Substituted Out': {
             session.userData.playerInOut = 'Out';
-            var date = new Date();
-            var currentElapsedTime = date.getTime() - session.userData.mostRecentStartTime;
-            session.userData.totalElapsedTime = session.userData.totalElapsedTime + currentElapsedTime;
+            var currentPlayerElapsedTime = date.getTime() - session.userData.mostRecentPlayerStartTime;
+            session.userData.totalPlayerElapsedTime = session.userData.totalPlayerElapsedTime + currentPlayerElapsedTime;
             };
             break;
         default: {console.log('Default Case')}
@@ -333,6 +335,7 @@ bot.dialog('deletePlayerData', [
 
 
 //dialog to display player details
+//NOT USED DELETE
 bot.dialog('playerDetails', function (session) {
     var msg = new builder.Message(session);
     msg.attachmentLayout(builder.AttachmentLayout.carousel)
@@ -340,8 +343,6 @@ bot.dialog('playerDetails', function (session) {
             new builder.HeroCard(session)
             .title("Player Details")
             .subtitle("Click to update information")
-            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
-            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
                 builder.CardAction.imBack(session, "Update Player Name", "Name: " + session.userData.playerName ),
                 builder.CardAction.imBack(session, "Update Player Number", "Number: " + session.userData.playerNumber ),
@@ -412,6 +413,7 @@ bot.dialog('deleteGameData', [
 
 
 //dialog to display game details
+//NOT USED DELETE
 bot.dialog('gameDetails', function (session) {
     var msg = new builder.Message(session);
     msg.attachmentLayout(builder.AttachmentLayout.carousel)
@@ -419,8 +421,6 @@ bot.dialog('gameDetails', function (session) {
             new builder.HeroCard(session)
             .title("Game Details")
             .subtitle("Click to update information")
-            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
-            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
                 builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.userData.opponentTeam ),
                 builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.userData.opponentClub ),
@@ -442,14 +442,13 @@ bot.dialog('playerAndGameDetails', function (session) {
         new builder.HeroCard(session)
         .title(session.userData.matchState + " Player Details")
         .subtitle("Click to update information")
-        // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
-        // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
         .buttons([
             builder.CardAction.imBack(session, "Update Player Name", "Name: " + session.userData.playerName ),
             builder.CardAction.imBack(session, "Update Player Number", "Number: " + session.userData.playerNumber ),
             builder.CardAction.imBack(session, "Update Team", "Team: " + session.userData.playerTeam ),
             builder.CardAction.imBack(session, "Update Club", "Club: " + session.userData.playerClub ),
-            builder.CardAction.imBack(session, "Player In", "Player In: " + moment(session.userData.totalElapsedTime).format('mm:ss') )
+            builder.CardAction.imBack(session, "Player Time", "Player Time: " + moment(session.userData.totalPlayerElapsedTime).format('mm:ss') ),
+            builder.CardAction.imBack(session, "Game Time", "Game Time: " + moment(session.userData.totalGameElapsedTime).format('mm:ss') )
 
         ]),
         new builder.HeroCard(session)
@@ -458,7 +457,6 @@ bot.dialog('playerAndGameDetails', function (session) {
 
             .buttons([
                 builder.CardAction.imBack(session, "Kick Off", "Kick Off"),
-                // builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" ),
                 builder.CardAction.imBack(session, "Update Home Team", session.userData.playerClub + ": " + session.userData.playerTeamHomeAway ),
                 builder.CardAction.imBack(session, "Update Opponent Team", "Opponent Team: " + session.userData.opponentTeam ),
                 builder.CardAction.imBack(session, "Update Opponent Club", "Opponent Club: " + session.userData.opponentClub ),
@@ -468,8 +466,6 @@ bot.dialog('playerAndGameDetails', function (session) {
             new builder.HeroCard(session)
             .title("Maintenance")
             .subtitle("Click to update information")
-            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
-            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
                 builder.CardAction.imBack(session, "Delete Game Data", "Track New Game" ),
                 builder.CardAction.imBack(session, "Delete Player Data", "Track New Player" )
@@ -488,8 +484,6 @@ bot.dialog('inGameTracking', function (session) {
         new builder.HeroCard(session)
             .title(session.userData.matchState + " Tracking Player #%s", session.userData.playerNumber )
             .subtitle("Click to log activity")
-            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
-            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
                 builder.CardAction.imBack(session, "Completed Pass", "Completed Pass " + session.userData.completedPassCount),
                 builder.CardAction.imBack(session, "Attempted Pass", "Attempted Pass " + session.userData.attemptedPassCount),
@@ -502,8 +496,6 @@ bot.dialog('inGameTracking', function (session) {
             new builder.HeroCard(session)
             .title(session.userData.matchState + " Tracking Player #%s", session.userData.playerNumber )
             .subtitle("Click to log activity")
-            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
-            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
                 builder.CardAction.imBack(session, "Shot", "Shot "+ session.userData.shotCount),
                 builder.CardAction.imBack(session, "Goal", "Goal "+ session.userData.goalCount),
@@ -515,8 +507,6 @@ bot.dialog('inGameTracking', function (session) {
             new builder.HeroCard(session)
             .title(session.userData.matchState + " Tracking Player #%s", session.userData.playerNumber )
             .subtitle("Click to log activity")
-            // .text("Price is $25 and carried in sizes (S, M, L, and XL)")
-            // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
             .buttons([
 
                 builder.CardAction.imBack(session, "Scanning", "Scanning "+ session.userData.scanningCount),
