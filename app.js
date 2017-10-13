@@ -154,6 +154,8 @@ function initializePlayerTrackingData(session) {
     session.userData.successfulTackleCount = 0;
     session.userData.attemptedTackleCount = 0;
     session.userData.shotCount = 0;
+    session.userData.shotOnFrameCount = 0;
+    session.userData.shotOffFrameCount = 0;
     session.userData.goalCount = 0;
     session.userData.inSpaceCount = 0;
     session.userData.scanningCount = 0;
@@ -615,10 +617,29 @@ bot.dialog('shotButtonClick', [
 ]).triggerAction({ matches: /shot/i });
 
 // Add dialog to handle button click
+bot.dialog('shotOnFrameButtonClick', [
+    function (session) {
+        session.userData.shotOnFrameCount ++;
+        logResponse (session, session.userData.playerNumber, 'Shot');
+        session.beginDialog('inGameTracking').endDialog();
+    }
+]).triggerAction({ matches: /shotOnFrame/i });
+
+// Add dialog to handle button click
+bot.dialog('shotOffFrameButtonClick', [
+    function (session) {
+        session.userData.shotOffFrameCount ++;
+        logResponse (session, session.userData.playerNumber, 'Shot');
+        session.beginDialog('inGameTracking').endDialog();
+    }
+]).triggerAction({ matches: /shotOffFrame/i });
+
+// Add dialog to handle button click
 bot.dialog('goalButtonClick', [
     function (session) {
         session.userData.goalCount ++;
         session.userData.shotCount ++;
+        session.userData.shotOnFrameCount ++;
         logResponse (session, session.userData.playerNumber, 'Goal');
         session.beginDialog('inGameTracking').endDialog();
     }
