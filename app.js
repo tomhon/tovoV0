@@ -248,6 +248,10 @@ var bot = new builder.UniversalBot(connector, [
 //set up match state - validate states Pre-Game, 1st Half, Half Time, 2nd Half, Full Time
         if (session.userData.matchState==undefined) {
             session.userData.matchState = 'Pre-Game';
+            session.userData.playerName = '<Enter>';
+            session.userData.playerNumber = '<Enter>';
+            session.userData.playerTeam = '<Enter>';
+            session.userData.playerClub = '<Enter>';
             initializePlayerTrackingData(session);
             console.log('Match State Changed >>>>' + session.userData.matchState);
         };
