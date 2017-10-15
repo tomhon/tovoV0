@@ -28,6 +28,8 @@ server.listen(process.env.port || process.env.PORT || 3978, function () {
  * @param {string} database - The database to get or create
  */
 function getDatabase() {
+    console.log ('CosmosDB Endpoint:' + config.endpoint);
+    console.log ('CosmosDB Password:' + config.primaryKey);
     console.log(`Getting database:\n${config.database.id}\n`);
 
     return new Promise((resolve, reject) => {
