@@ -5,10 +5,10 @@ module.exports = function initializePlayerTrackingData(session) {
     console.log('New Game Id set >>>>' + session.userData.gameId);
     session.userData.matchState = 'Pre-Game';
     session.userData.playerTeamHomeAway = 'Home'; 
-    session.userData.opponentTeam = '<Enter>';
-    session.userData.opponentClub = '<Enter>';
-    session.userData.gameLocation = '<Enter>';
-    session.userData.gameField = '<Enter>';
+    session.userData.opponentTeam = 'Unknown';
+    session.userData.opponentClub = 'Unknown';
+    session.userData.gameLocation = 'Unknown';
+    session.userData.gameField = 'Unknown';
     session.userData.totalPlayerElapsedTime = 0;
     session.userData.totalGameElapsedTime = 0;
     session.userData.completedPassCount = 0;
