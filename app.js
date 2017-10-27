@@ -476,6 +476,22 @@ bot.dialog('kickOffButtonClick', [
                 console.log('Match State Changed >>>>' + session.userData.matchState);
                 // session.beginDialog('inGameTracking');
             }
+        if (session.userData.matchState == 'Full Time') 
+            {
+                updateElapsedTime(session,'Kick Off 1st Half Extra Time');
+                logResponse (session, session.userData.playerNumber, 'Kick Off 1st Half Extra Time');
+                session.userData.matchState = '1st Half Extra Time';
+                console.log('Match State Changed >>>>' + session.userData.matchState);
+                // session.beginDialog('inGameTracking');
+            }
+        if (session.userData.matchState == 'Half Time Extra Time') 
+            {
+                updateElapsedTime(session,'Kick Off 2nd Half Extra Time');
+                logResponse (session, session.userData.playerNumber, 'Kick Off 2nd Half Extra Time');
+                session.userData.matchState = '2nd Half Extra Time';
+                console.log('Match State Changed >>>>' + session.userData.matchState);
+                // session.beginDialog('inGameTracking');
+            }
         session.beginDialog('inGameTracking').endDialog();
     }
 ]).triggerAction({ matches: /kick off/i });
@@ -500,6 +516,22 @@ bot.dialog('finalWhistleButtonClick', [
                 session.userData.matchState = 'Full Time';
                 console.log('Match State Changed >>>>' + session.userData.matchState);
             }
+        if (session.userData.matchState == '1st Half Extra Time') 
+            {
+                session.userData.finalWhistleCount ++;
+                updateElapsedTime(session,'Final Whistle');
+                logResponse (session, session.userData.playerNumber, 'Final Whistle 1st Half Extra Time');
+                session.userData.matchState = 'Half Time Extra Time';
+                console.log('Match State Changed >>>>' + session.userData.matchState);
+            }
+        if (session.userData.matchState == '2nd Half Extra Time') 
+            {
+                session.userData.finalWhistleCount ++;
+                updateElapsedTime(session,'Final Whistle');
+                logResponse (session, session.userData.playerNumber, 'Final Whistle 2nd Half Extra Time');
+                session.userData.matchState = 'Full Time Extra Time';
+                console.log('Match State Changed >>>>' + session.userData.matchState);
+            }
         session.beginDialog('playerAndGameDetails').endDialog();
 
     }
@@ -510,13 +542,13 @@ server.get('/', restify.serveStatic({
  directory: __dirname,
  default: '/index.html',
 }));
-server.get('/api/CustomWebApi', (req, res, next) => {
-    startProactiveDialog(savedAddress);
-    // sendProactiveMessage(savedAddress);
-    res.send('triggered');
-    next();
-  }
-);
+// server.get('/api/CustomWebApi', (req, res, next) => {
+//     startProactiveDialog(savedAddress);
+//     // sendProactiveMessage(savedAddress);
+//     res.send('triggered');
+//     next();
+//   }
+// );
 
 initialLogEntry = new logData();
 

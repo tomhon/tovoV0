@@ -121,10 +121,10 @@ module.exports = function processButtonClick(session, action) {
     else {
         switch (action) {
             case 'Delete Player Data': {
-                session.userData.playerName = '<Enter>';
-                session.userData.playerNumber = '<Enter>';
-                session.userData.playerTeam = '<Enter>';
-                session.userData.playerClub = '<Enter>';
+                session.userData.playerName = 'Unknown';
+                session.userData.playerNumber = 'Unknown';
+                session.userData.playerTeam = 'Unknown';
+                session.userData.playerClub = 'Unknown';
                 initializePlayerTrackingData(session);
                 logResponse (session, session.userData.playerNumber, action);
                 session.send('Player Data Details Initialized');

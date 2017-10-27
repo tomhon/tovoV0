@@ -14,6 +14,18 @@ module.exports = function updateElapsedTime(session, event) {
             session.userData.mostRecentGameStartTime = date.getTime();
             };
             break;
+        case 'Kick Off 1st Half Extra Time': {
+            session.userData.playerInOut = 'In Assumed';
+            session.userData.mostRecentPlayerStartTime = date.getTime();
+            session.userData.mostRecentGameStartTime = date.getTime();
+            };
+            break;
+        case 'Kick Off 2nd Half Extra Time': {
+            //assume playerInOut doesn't change at half time
+            session.userData.mostRecentPlayerStartTime = date.getTime();
+            session.userData.mostRecentGameStartTime = date.getTime();
+            };
+            break;
         case 'Final Whistle': {
             //assume playerInOut doesn't change at half time or full time
             var currentGameElapsedTime = date.getTime() - session.userData.mostRecentGameStartTime;
