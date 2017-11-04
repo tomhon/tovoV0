@@ -1,6 +1,7 @@
 var matchInProgress = require("./matchInProgress");
 var logResponse = require("./logResponse");
 var initializePlayerTrackingData = require("./initializePlayerTrackingData");
+var updateElapsedTime = require("./updateElapsedTime");
 
 module.exports = function processButtonClick(session, action) {
     if (matchInProgress(session)) {
