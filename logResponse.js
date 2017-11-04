@@ -105,4 +105,4 @@ function getDBDocument(document) {
 getDatabase()
 .then(() => getCollection())
 .then(() => {getDBDocument(initialLogEntry)})
-.catch((error) => { exit(`Completed with error ${JSON.stringify(error)}`) });
+.catch((error) => { console.log(`Completed with error ${JSON.stringify(error)}`) });

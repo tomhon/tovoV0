@@ -77,11 +77,13 @@ module.exports = function processButtonClick(session, action) {
                         }
             case 'Substituted In': {
                 session.userData.substitutedInCount ++;
+                updateElapsedTime(session, 'Substituted In');
                 logResponse (session, session.userData.playerNumber, action);
                 break;
                 }
             case 'Substituted Out': {
                 session.userData.susbstitutedOutCount ++;
+                updateElapsedTime(session, 'Substituted Out');
                 logResponse (session, session.userData.playerNumber, action);
                 break;
                 }

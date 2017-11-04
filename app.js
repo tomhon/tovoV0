@@ -4,7 +4,14 @@ var builder = require('botbuilder');
 var config = require("./config");
 var processButtonClick = require("./processButtonClick");
 var updateElapsedTime = require("./updateElapsedTime");
+
+//stub this in when online
 var logResponse = require("./logResponse");
+//stub this out when online
+// function logResponse (session,player,status) {
+//     console.log(status + 'not logged');
+//     return;
+// }
 var initializePlayerTrackingData = require("./initializePlayerTrackingData");
 var matchInProgress = require("./matchInProgress");
 

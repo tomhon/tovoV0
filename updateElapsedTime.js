@@ -15,13 +15,13 @@ module.exports = function updateElapsedTime(session, event) {
             };
             break;
         case 'Kick Off 1st Half Extra Time': {
-            session.userData.playerInOut = 'In Assumed';
+            //assume playerInOut doesn't change for extra time
             session.userData.mostRecentPlayerStartTime = date.getTime();
             session.userData.mostRecentGameStartTime = date.getTime();
             };
             break;
         case 'Kick Off 2nd Half Extra Time': {
-            //assume playerInOut doesn't change at half time
+            //assume playerInOut doesn't change at half time extra time
             session.userData.mostRecentPlayerStartTime = date.getTime();
             session.userData.mostRecentGameStartTime = date.getTime();
             };
@@ -33,6 +33,7 @@ module.exports = function updateElapsedTime(session, event) {
             if (session.userData.playerInOut == 'In' || session.userData.playerInOut == 'In Assumed') {
                 var currentPlayerElapsedTime = date.getTime() - session.userData.mostRecentPlayerStartTime;
                 session.userData.totalPlayerElapsedTime = session.userData.totalPlayerElapsedTime + currentPlayerElapsedTime;
+                console.log('----> totalPlayerElapsedTime Updated' + session.userData.totalPlayerElapsedTime );
                 }
             };
             break;
@@ -45,6 +46,7 @@ module.exports = function updateElapsedTime(session, event) {
             session.userData.playerInOut = 'Out';
             var currentPlayerElapsedTime = date.getTime() - session.userData.mostRecentPlayerStartTime;
             session.userData.totalPlayerElapsedTime = session.userData.totalPlayerElapsedTime + currentPlayerElapsedTime;
+            console.log('----> totalPlayerElapsedTime Updated' + session.userData.totalPlayerElapsedTime );
             };
             break;
         default: {console.log('Default Case')}
