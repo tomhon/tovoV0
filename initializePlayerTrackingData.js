@@ -21,6 +21,7 @@ module.exports = function initializePlayerTrackingData(session) {
     session.userData.shotOnFrameCount = 0;
     session.userData.shotOffFrameCount = 0;
     session.userData.goalCount = 0;
+    session.userData.assistCount = 0;
     session.userData.inSpaceCount = 0;
     session.userData.scanningCount = 0;
     session.userData.substitutedInCount = 0;
