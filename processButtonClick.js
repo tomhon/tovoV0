@@ -1,5 +1,5 @@
 var matchInProgress = require("./matchInProgress");
-var logResponse = require("./logResponse");
+var logResponse = require("./logResponseSQL");
 var initializePlayerTrackingData = require("./initializePlayerTrackingData");
 var updateElapsedTime = require("./updateElapsedTime");
 
@@ -125,7 +125,7 @@ module.exports = function processButtonClick(session, action) {
         switch (action) {
             case 'Delete Player Data': {
                 session.userData.playerName = 'Unknown';
-                session.userData.playerNumber = 'Unknown';
+                session.userData.playerNumber = 99;
                 session.userData.playerTeam = 'Unknown';
                 session.userData.playerClub = 'Unknown';
                 initializePlayerTrackingData(session);

@@ -6,13 +6,14 @@ var processButtonClick = require("./processButtonClick");
 var updateElapsedTime = require("./updateElapsedTime");
 
 //stub this in when online
-var logResponse = require("./logResponse");
+var logResponse = require("./logResponseSQL");
 //stub this out when online
 // function logResponse (session,player,status) {
 //     console.log(status + 'not logged');
 //     return;
 // }
 var initializePlayerTrackingData = require("./initializePlayerTrackingData");
+var addNewVariablesToUserData = require("./addNewVariablesToUserData");
 var matchInProgress = require("./matchInProgress");
 
 var moment = require('moment');
@@ -57,15 +58,16 @@ var savedAddress;
 // Receive messages from the user and respond by echoing each message back (prefixed with 'You said:')
 var bot = new builder.UniversalBot(connector, [
     function (session, args, next) {
+        addNewVariablesToUserData(session);
         session.send("Welcome to the Player Tracker. I'm here to help gather stats on your player's performance");
 //set up match state - validate states Pre-Game, 1st Half, Half Time, 2nd Half, Full Time
         if (session.userData.matchState==undefined) {
+            initializePlayerTrackingData(session);
             session.userData.matchState = 'Pre-Game';
             session.userData.playerName = '<Enter>';
             session.userData.playerNumber = '<Enter>';
             session.userData.playerTeam = '<Enter>';
             session.userData.playerClub = '<Enter>';
-            initializePlayerTrackingData(session);
             console.log('Match State Changed >>>>' + session.userData.matchState);
         };
         if (session.userData.matchState=='Full Time') {
@@ -287,7 +289,7 @@ bot.dialog('inGameTracking', function (session) {
 
                 builder.CardAction.imBack(session, "Scanning", "Scanning "+ session.userData.scanningCount),
                 builder.CardAction.imBack(session, "Substituted In", "Substituted In "+ session.userData.substitutedInCount),
-                builder.CardAction.imBack(session, "Substituted Out", "Substituted Out "+ session.userData.susbstitutedOutCount),
+                builder.CardAction.imBack(session, "Substituted Out", "Substituted Out "+ session.userData.substitutedOutCount),
                 builder.CardAction.imBack(session, "Fouled", "Fouled "+ session.userData.fouledCount),
                 builder.CardAction.imBack(session, "Committed Foul", "Committed Foul "+ session.userData.committedFoulCount),
                 builder.CardAction.imBack(session, "Final Whistle", "Final Whistle" )
