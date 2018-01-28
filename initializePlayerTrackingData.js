@@ -1,7 +1,7 @@
 //Deletes all game data and initializes tracking variables
 module.exports = function initializePlayerTrackingData(session) {
     var date = new Date();
-    session.userData.gameId = date,
+    session.userData.gameId = date.toISOString(),
     console.log('New Game Id set >>>>' + session.userData.gameId);
     session.userData.assistCount = 0;
     session.userData.attemptedDribbleCount = 0;
